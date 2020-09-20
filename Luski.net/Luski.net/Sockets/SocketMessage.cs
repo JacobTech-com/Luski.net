@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Net;
+using Luski.net.Interfaces;
 using Newtonsoft.Json;
 
 namespace Luski.net.Sockets
 {
-    public class SocketMessage
+    internal class SocketMessage : IMessage
     {
         internal SocketMessage(string json)
         {
@@ -27,7 +28,7 @@ namespace Luski.net.Sockets
                         web.Headers.Add("Token", Server.Token);
                         web.Headers.Add("MSG_Id", ID.ToString());
                         web.Headers.Add("User_Id", DM.ToString());
-                        json = web.DownloadString("https://jacobtech.org/Luski/api/socketdmmessage");
+                        json = web.DownloadString($"https://{Server.Domain}/Luski/api/socketdmmessage");
                     }
                     break;
                 }
@@ -52,13 +53,13 @@ namespace Luski.net.Sockets
         public ulong Id { get; }
         public string Context { get; }
 
-        public SocketChannel GetChannel()
+        public IChannel GetChannel()
         {
             return new SocketChannel(ChannelId);
         }
-        public SocketUser GetAuthor()
+        public IRemoteUser GetAuthor()
         {
-            return new SocketUser(AuthorId);
+            return new SocketRemoteUser(AuthorId);
         }
     }
 }

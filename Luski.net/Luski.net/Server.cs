@@ -9,17 +9,20 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Drawing;
 using System.IO;
+using Luski.net.Interfaces;
 
 namespace Luski.net
 {
     public class Server
     {
         internal static WebSocket ServerOut;
+        internal static SocketAudioClient AudioClient = null;
         internal static string Token = null;
         internal static string Error = null;
         internal static bool CanRequest = false;
         internal static ulong SelectedChannel;
         internal static ulong ID;
+        internal static string Domain = "jacobtech.com";
 
         public class CreateAccount : Login
         {
@@ -31,13 +34,13 @@ namespace Luski.net
 
         public class Login
         {
-            public event Func<SocketMessage, Task> MessageReceived;
+            public event Func<IMessage, Task> MessageReceived;
 
-            public event Func<SocketUser, SocketUser, Task> UserStatusUpdate;
+            public event Func<IUser, IUser, Task> UserStatusUpdate;
 
-            public event Func<SocketUser, Task> ReceivedFriendRequest;
+            public event Func<IRemoteUser, Task> ReceivedFriendRequest;
 
-            public event Func<SocketUser, bool, Task> FriendRequestResult;
+            public event Func<IRemoteUser, bool, Task> FriendRequestResult;
 
             public event Func<Exception, Task> OnError;
 
@@ -51,9 +54,9 @@ namespace Luski.net
                     web.Headers.Add("Key", Encryption.MyPublicKey);
                     web.Headers.Add("Email", Encryption.Encrypt(Email));
                     web.Headers.Add("Password", Encryption.Encrypt(Password));
-                    Result = web.DownloadString("https://JacobTech.org/Luski/api/Login");
+                    Result = web.DownloadString($"https://{Domain}/Luski/api/Login");
                     web.Headers.Clear();
-                    Connection = web.DownloadString("https://JacobTech.org/Luski/info");
+                    Connection = web.DownloadString($"https://{Domain}/Luski/info");
                 }
                 dynamic json = JsonConvert.DeserializeObject<dynamic>(Result);
                 dynamic info = JsonConvert.DeserializeObject<dynamic>(Connection);
@@ -83,11 +86,11 @@ namespace Luski.net
                     {
                         web.Headers.Add("Token", Token);
                         web.Headers.Add("Id", Encoding.UTF8.GetString(Convert.FromBase64String(Token.Split('.')[0])));
-                        data = web.DownloadString("https://jacobtech.org/Luski/api/SocketUser");
+                        data = web.DownloadString($"https://{Domain}/Luski/api/SocketUser");
                     }
                     User = new SocketAppUser(data);
-                    ID = User.ID;
-                    SelectedChannel = User.SelectedChannel;
+                    ID = CurrentUser.ID;
+                    SelectedChannel = CurrentUser.SelectedChannel;
                     User.Email = Email;
                     UpdateStatus(UserStatus.Online);
                 }
@@ -110,9 +113,9 @@ namespace Luski.net
                     web.Headers.Add("Username", Username);
                     byte[] bytes = ImageToByteArray(PFP);
                     string pfp = BitConverter.ToString(bytes);
-                    Result = web.UploadString("https://JacobTech.org/Luski/api/CreateAccount", "POST", pfp);
+                    Result = web.UploadString($"https://{Domain}/Luski/api/CreateAccount", "POST", pfp);
                     web.Headers.Clear();
-                    Connection = web.DownloadString("https://JacobTech.org/Luski/info");
+                    Connection = web.DownloadString($"https://{Domain}/Luski/info");
                 }
                 dynamic json = JsonConvert.DeserializeObject<dynamic>(Result);
                 dynamic info = JsonConvert.DeserializeObject<dynamic>(Connection);
@@ -142,11 +145,11 @@ namespace Luski.net
                     {
                         web.Headers.Add("Token", Token);
                         web.Headers.Add("Id", Encoding.UTF8.GetString(Convert.FromBase64String(Token.Split('.')[0])));
-                        data = web.DownloadString("https://jacobtech.org/Luski/api/SocketUser");
+                        data = web.DownloadString($"https://{Domain}/Luski/api/SocketUser");
                     }
                     User = new SocketAppUser(data);
-                    ID = User.ID;
-                    SelectedChannel = User.SelectedChannel;
+                    ID = CurrentUser.ID;
+                    SelectedChannel = CurrentUser.SelectedChannel;
                     User.Email = Email;
                     UpdateStatus(UserStatus.Online);
                 }
@@ -154,6 +157,19 @@ namespace Luski.net
                 {
                     throw new Exception((string)json.Error);
                 }
+            }
+
+            /// <summary>
+            /// Creates an audio client with an user <paramref name="ID"/> you want to talk to
+            /// </summary>
+            /// <param name="ID">The user <see cref="IUser.ID"/> you want to talk to</param>
+            /// <returns><seealso cref="IAudioClient"/></returns>
+            public IAudioClient CreateAudioClient(ulong ID)
+            {
+                if (AudioClient != null) throw new Exception("audio client alread created");
+                SocketAudioClient client = new SocketAudioClient(ID, OnError);
+                AudioClient = client;
+                return client;
             }
 
             public void SendFriendResult(ulong user, bool answer)
@@ -216,7 +232,7 @@ namespace Luski.net
                     case "Status Update":
                         if (UserStatusUpdate != null)
                         {
-                            SocketUser after = new SocketUser((ulong)data.Data.Id);
+                            SocketRemoteUser after = new SocketRemoteUser((ulong)data.Data.Id);
                             UserStatus st = UserStatus.Offline;
                             switch (((string)data.Data.Before).ToLower())
                             {
@@ -236,30 +252,67 @@ namespace Luski.net
                                     st = UserStatus.DoNotDisturb;
                                     break;
                             }
-                            SocketUser before = after;
+                            SocketRemoteUser before = after;
                             before.Status = st;
-
                             UserStatusUpdate.Invoke(before, after);
                         }
                         break;
                     case "Frined Request":
                         if (ReceivedFriendRequest != null)
                         {
-                            SocketUser from = new SocketUser((ulong)data.Data.From);
+                            SocketRemoteUser from = new SocketRemoteUser((ulong)data.Data.From);
                             ReceivedFriendRequest.Invoke(from);
                         }
                         break;
                     case "Friend Request Result":
                         if (FriendRequestResult != null)
                         {
-                            SocketUser from1 = new SocketUser((ulong)data.Data.Id);
+                            SocketRemoteUser from1 = new SocketRemoteUser((ulong)data.Data.Id);
                             FriendRequestResult.Invoke(from1, (bool)data.Data.Result);
                         }
+                        break;
+                    case "Call Info":
+                        if (AudioClient != null)
+                        {
+                            AudioClient.Samples = (int)data.Data.SamplesPerSecond;
+                            AudioClient.Givedata((string)data);
+                        }
+                        break;
+                    case "Call Data":
+                        if (AudioClient != null)
+                        {
+                            AudioClient.Givedata((string)data);
+                        }
+                        break;
+                    default:
                         break;
                 }
             }
 
-            public SocketAppUser User { get; }
+            public IMessage GetMessage(ulong DmUserId, ulong MessageId)
+            {
+                return new SocketMessage(MessageId, DmUserId);
+            }
+
+            public IRemoteUser GetUser(ulong UserID)
+            {
+                return new SocketRemoteUser(UserID);
+            }
+
+            public IChannel GetDMChannel(ulong DMUserID)
+            {
+                return new SocketChannel(DMUserID);
+            }
+
+            public IAppUser CurrentUser 
+            {
+                get
+                {
+                    return User;
+                }
+            }
+
+            internal SocketAppUser User { get; }
         }
 
         internal static void SendServer(JObject data)

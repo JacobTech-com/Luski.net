@@ -5,13 +5,14 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Luski.net;
+using Luski.net.Interfaces;
 using Newtonsoft.Json;
 
 namespace Luski.net.Sockets
 {
-    public class SocketUser : SocketUserBase
+    internal class SocketRemoteUser : SocketUserBase , IRemoteUser
     {
-        public SocketUser(ulong ID):this(IdToJson(ID))
+        internal SocketRemoteUser(ulong ID):this(IdToJson(ID))
         {
 
         }
@@ -27,7 +28,7 @@ namespace Luski.net.Sockets
                     {
                         web.Headers.Add("Token", Server.Token);
                         web.Headers.Add("Id", id.ToString());
-                        data = web.DownloadString("https://jacobtech.org/Luski/api/socketuser");
+                        data = web.DownloadString($"https://{Server.Domain}/Luski/api/socketuser");
                     }
                     break;
                 }
@@ -35,7 +36,7 @@ namespace Luski.net.Sockets
             return data;
         }
 
-        internal SocketUser(string json):base(json)
+        internal SocketRemoteUser(string json):base(json)
         {
             dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
             if ((ulong)data.Id != Server.ID)

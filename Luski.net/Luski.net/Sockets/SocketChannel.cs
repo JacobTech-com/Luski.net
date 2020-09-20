@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web.UI;
+using Luski.net.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Luski.net.Sockets
 {
-    public class SocketChannel
+    internal class SocketChannel : IChannel
     {
         internal SocketChannel(string json)
         {
@@ -34,7 +32,7 @@ namespace Luski.net.Sockets
             }
         }
 
-        public SocketChannel(ulong id)
+        internal SocketChannel(ulong id)
         {
             string json;
             while (true)
@@ -45,7 +43,7 @@ namespace Luski.net.Sockets
                     {
                         web.Headers.Add("Token", Server.Token);
                         web.Headers.Add("Id", id.ToString());
-                        json = web.DownloadString("https://jacobtech.org/Luski/api/SocketDMChannel");
+                        json = web.DownloadString($"https://{Server.Domain}/Luski/api/SocketDMChannel");
                     }
                     break;
                 }
@@ -80,12 +78,12 @@ namespace Luski.net.Sockets
             Server.SendServer(JsonRequest.Send("Message Create", JsonRequest.Message(Message, Id)));
         }
 
-        public SocketMessage GetMessage(ulong ID)
+        public IMessage GetMessage(ulong ID)
         {
             return new SocketMessage(ID, Id);
         }
 
-        public SocketMessage[] GetMessages(ulong MRID, int count = 50)
+        public IReadOnlyList<IMessage> GetMessages(ulong MRID, int count = 50)
         {
             if (count > 200) throw new Exception("You can not request more than 200 messages at a time");
             else if (count < 1) throw new Exception("You must request at least 1 message");
@@ -98,7 +96,7 @@ namespace Luski.net.Sockets
                     web.Headers.Add("User_Id", Id.ToString());
                     web.Headers.Add("Messages", count.ToString());
                     web.Headers.Add("MostRecentID", MRID.ToString());
-                    json = web.DownloadString("https://jacobtech.org/Luski/api/SocketDMBulkMessage");
+                    json = web.DownloadString($"https://{Server.Domain}/Luski/api/SocketDMBulkMessage");
                 }
                 dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
                 string error = (string)data.error;
@@ -111,7 +109,7 @@ namespace Luski.net.Sockets
                     {
                         messages.Add(new SocketMessage(msg.ToString()));
                     }
-                    return messages.ToArray();
+                    return messages.AsReadOnly();
                 }
                 else
                 {
@@ -120,7 +118,7 @@ namespace Luski.net.Sockets
             }
         }
 
-        public SocketMessage[] GetMessages(int count = 50)
+        public IReadOnlyList<IMessage> GetMessages(int count = 50)
         {
             if (count > 200) throw new Exception("You can not request more than 200 messages at a time");
             else if (count < 1) throw new Exception("You must request at least 1 message");
@@ -132,7 +130,7 @@ namespace Luski.net.Sockets
                     web.Headers.Add("Token", Server.Token);
                     web.Headers.Add("User_Id", Id.ToString());
                     web.Headers.Add("Messages", count.ToString());
-                    json = web.DownloadString("https://jacobtech.org/Luski/api/SocketDMBulkMessage");
+                    json = web.DownloadString($"https://{Server.Domain}/Luski/api/SocketDMBulkMessage");
                 }
                 dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
                 string error = (string)data.error;
@@ -145,7 +143,7 @@ namespace Luski.net.Sockets
                     {
                         messages.Add(new SocketMessage(msg.ToString()));
                     }
-                    return messages.ToArray();
+                    return messages.AsReadOnly();
                 }
                 else
                 {

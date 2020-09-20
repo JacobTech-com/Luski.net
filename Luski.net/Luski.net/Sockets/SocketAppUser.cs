@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Luski.net.Interfaces;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -9,66 +10,65 @@ using System.Web.UI;
 
 namespace Luski.net.Sockets
 {
-    public class SocketAppUser : SocketUserBase
+    internal class SocketAppUser : SocketUserBase, IAppUser
     {
         internal SocketAppUser(string Json):base(Json)
         {
             dynamic json = JsonConvert.DeserializeObject<dynamic>(Json);
             JArray FriendReq = new JArray();
             JArray Friend = new JArray();
-            FriendReq = DataBinder.Eval(json, "Friend Request");
+            FriendReq = DataBinder.Eval(json, "Friend Requests");
             Friend = DataBinder.Eval(json, "Friends");
-            SocketUser[] f = new SocketUser[Friend.Count];
-            SocketUser[] frq = new SocketUser[FriendReq.Count];
-            for (int i = 0; i < Friend.Count; i++)
+            _Friends = new List<IRemoteUser>();
+            _FriendRequests = new List<IRemoteUser>();
+            foreach (JToken user in Friend)
             {
-                f[i] = new SocketUser(ulong.Parse(Friend[i]["user_id"].ToString()));
+                _Friends.Add(new SocketRemoteUser(ulong.Parse(user["user_id"].ToString())));
             }
-            for (int i = 0; i < FriendReq.Count; i++)
+            foreach (JToken user in FriendReq)
             {
-                frq[i] = new SocketUser(ulong.Parse(FriendReq[i]["user_id"].ToString()));
+                _FriendRequests.Add(new SocketRemoteUser(ulong.Parse(user["user_id"].ToString())));
             }
-            Friends = f;
-            FriendRequests = frq;
         }
 
         public string Email { get; internal set; }
-        public SocketUser[] Friends { get; internal set; }
-        public SocketUser[] FriendRequests { get; internal set; }
-
-        internal void AddFriend(SocketUser User)
+        public IReadOnlyList<IRemoteUser> Friends 
         {
-            List<SocketUser> @new = new List<SocketUser>();
-            foreach (SocketUser user in Friends)
+            get
             {
-                @new.Add(user);
+                return _Friends.AsReadOnly();
             }
-            @new.Add(User);
-            Friends = @new.ToArray();
+        }
+        public IReadOnlyList<IRemoteUser> FriendRequests
+        {
+            get
+            {
+                return _FriendRequests.AsReadOnly();
+            }
         }
 
-        internal void RemoveFriendRequest(SocketUser User)
+        private List<IRemoteUser> _Friends;
+        private List<IRemoteUser> _FriendRequests;
+
+        internal void AddFriend(SocketRemoteUser User)
         {
-            List<SocketUser> @new = new List<SocketUser>();
-            foreach (SocketUser user in FriendRequests)
+            _Friends.Add(User);
+        }
+
+        internal void RemoveFriendRequest(SocketRemoteUser User)
+        {
+            foreach (IRemoteUser user in _FriendRequests)
             {
-                if (User.ID != user.ID)
+                if (User.ID == user.ID)
                 {
-                    @new.Add(user);
+                    _FriendRequests.Remove(User);
                 }
             }
-            Friends = @new.ToArray();
         }
 
-        internal void AddFriendRequest(SocketUser User)
+        internal void AddFriendRequest(SocketRemoteUser User)
         {
-            List<SocketUser> @new = new List<SocketUser>();
-            foreach (SocketUser user in FriendRequests)
-            {
-                @new.Add(user);
-            }
-            @new.Add(User);
-            Friends = @new.ToArray();
+            _FriendRequests.Add(User);
         }
     }
 }

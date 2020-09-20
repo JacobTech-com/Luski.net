@@ -21,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -29,6 +30,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
@@ -51,15 +53,33 @@
   <ItemGroup>
     <Compile Include="ChannelType.cs" />
     <Compile Include="Encryption.cs" />
+    <Compile Include="Exceptions.cs" />
     <Compile Include="FriendStatus.cs" />
+    <Compile Include="Interfaces\IAudioClient.cs" />
+    <Compile Include="Interfaces\IChannel.cs" />
+    <Compile Include="Interfaces\IMessage.cs" />
+    <Compile Include="Interfaces\IAppUser.cs" />
+    <Compile Include="Interfaces\IRemoteUser.cs" />
+    <Compile Include="Interfaces\IUser.cs" />
     <Compile Include="JsonRequest.cs" />
     <Compile Include="Server.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Sockets\SocketAppUser.cs" />
+    <Compile Include="Sockets\SocketAudioClient.cs" />
     <Compile Include="Sockets\SocketChannel.cs" />
     <Compile Include="Sockets\SocketMessage.cs" />
-    <Compile Include="Sockets\SocketUser.cs" />
+    <Compile Include="Sockets\SocketRemoteUser.cs" />
     <Compile Include="Sockets\SocketUserBase.cs" />
+    <Compile Include="Sound\JitterBuffer.cs" />
+    <Compile Include="Sound\Recorder.cs" />
+    <Compile Include="Sound\Timer.cs" />
+    <Compile Include="Sound\Utils.cs" />
+    <Compile Include="Sound\WaveFile.cs" />
+    <Compile Include="Sound\WinSound.cs" />
+    <Compile Include="Sound\Player.cs" />
+    <Compile Include="Sound\Protocol.cs" />
+    <Compile Include="Sound\RTPPacket.cs" />
+    <Compile Include="Sound\Win32.cs" />
     <Compile Include="UserStatus.cs" />
   </ItemGroup>
   <ItemGroup>

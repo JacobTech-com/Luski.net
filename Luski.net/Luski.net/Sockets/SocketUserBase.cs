@@ -3,13 +3,15 @@ using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Net;
+using Luski.net.Interfaces;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Luski.net.Sockets
 {
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public class SocketUserBase
+    internal class SocketUserBase : IUser
     {
         internal SocketUserBase(string json)
         {
@@ -36,6 +38,13 @@ namespace Luski.net.Sockets
                     Status = UserStatus.Invisible;
                     break;
             }
+            JObject d = new JObject();
+            d.Add("ID", ID);
+            d.Add("Username", Username);
+            d.Add("Tag", Tag);
+            d.Add("SelectedChannel", SelectedChannel);
+            d.Add("Status", ((string)data.Status).ToLower());
+            data = d;
         }
 
         public ulong ID { get; }
@@ -43,13 +52,18 @@ namespace Luski.net.Sockets
         public int Tag { get; }
         public virtual ulong SelectedChannel { get; internal set; }
         public virtual UserStatus Status { get; internal set; }
+        internal JObject data { get; set; }
+        public override string ToString()
+        {
+            return data.ToString();
+        }
         public Image GetAvatar()
         {
             byte[] data;
             Bitmap map;
             using (WebClient web = new WebClient())
             {
-                data = web.DownloadData($"https://jacobtech.org/assets/luski/avatars/{ID}.png");
+                data = web.DownloadData($"https://{Server.Domain}/assets/luski/avatars/{ID}.png");
             }
             using (MemoryStream mStream = new MemoryStream())
             {

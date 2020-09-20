@@ -10,6 +10,21 @@ namespace Luski.net
 {
     internal static class JsonRequest
     {
+        internal static JObject SendData(string Data)
+        {
+            JObject @out = new JObject();
+            @out.Add("Data", Data);
+            return @out;
+        }
+
+        internal static JObject JoinCall(ulong DM)
+        {
+            JObject @out = new JObject();
+            @out.Add("Type", "DM");
+            @out.Add("Id", DM);
+            return @out;
+        }
+
         internal static JObject Send(string Request, JObject Data)
         {
             JObject @out = new JObject();

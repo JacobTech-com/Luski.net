@@ -12,7 +12,7 @@ namespace Luski.net
     {
         internal static string MyPublicKey;
         private static readonly UnicodeEncoding Encoder = new UnicodeEncoding();
-        private static readonly RSACryptoServiceProvider RSA = new RSACryptoServiceProvider(2240);
+        private static readonly RSACryptoServiceProvider RSA = new RSACryptoServiceProvider(1024);
         private static string myPrivateKey;
 
         internal static void GenerateKeys()
@@ -27,7 +27,7 @@ namespace Luski.net
             {
                 using (WebClient web = new WebClient())
                 {
-                    rsa.FromXmlString(web.DownloadString("https://jacobtech.org/Luski/PublicKey"));
+                    rsa.FromXmlString(web.DownloadString("https://localhost:44396//Luski/PublicKey"));
                     byte[] dataToEncrypt = Encoder.GetBytes(data);
                     byte[] encryptedByteArray = rsa.Encrypt(dataToEncrypt, false).ToArray();
                     int length = encryptedByteArray.Count();
