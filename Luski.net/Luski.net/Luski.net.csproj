@@ -72,6 +72,7 @@
     <Compile Include="Sockets\SocketUserBase.cs" />
     <Compile Include="Sound\JitterBuffer.cs" />
     <Compile Include="Sound\Recorder.cs" />
+    <Compile Include="Sound\Devices.cs" />
     <Compile Include="Sound\Timer.cs" />
     <Compile Include="Sound\Utils.cs" />
     <Compile Include="Sound\WaveFile.cs" />
@@ -83,6 +84,9 @@
     <Compile Include="UserStatus.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\.editorconfig">
+      <Link>.editorconfig</Link>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

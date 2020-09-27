@@ -15,42 +15,53 @@ namespace Luski.net.Sockets
         internal SocketAudioClient(ulong Channel, Func<Exception, Task> error)
         {
             DM = Channel;
+            errorin = error;
+            Muted = false;
+            PrototolClient.DataComplete += new Protocol.DelegateDataComplete(OnProtocolClient_DataComplete);
             DataRecived += SocketAudioClient_DataRecived;
         }
 
-        private Task SocketAudioClient_DataRecived(JObject arg)
+        public event Func<Task> Connected;
+        
+        public bool Muted { get; private set; }
+
+        public bool Deafened { get; private set; }
+
+        public void ToggleMic()
         {
-            dynamic d = arg.ToString();
-            byte[] data = Encoding.UTF8.GetBytes((string)d.Data);
-            PrototolClient.Receive_LH(this, data);
-            throw new NotImplementedException();
+            if (Muted == true) Muted = false;
+            else Muted = true;
         }
 
-        internal ulong DM;
-        private Func<Exception, Task> errorin;
-        internal bool Connectedb = false;
-        public event Func<Task> Connected;
-        public event Func<JObject, Task> DataRecived;
-        private JitterBuffer PlayingJitterBuffer = new JitterBuffer(null, 5, 20);
-        private Recorder RecorderClient;
-        private uint JitterBuffer = 5;
-        private uint RecorderFactor = 4;
-        private Player PlayerClient;
-        private int BitsPerSample = 16;
-        private int Channels = 1;
-        private bool recording = false;
-        private int m_SoundBufferCount = 8;
-        private JitterBuffer RecordingJitterBuffer = new JitterBuffer(null, 5, 20);
-        private long m_SequenceNumber = 4596;
-        private long m_TimeStamp = 0;
-        private int m_Version = 2;
-        private bool m_Padding = false;
-        private bool m_Extension = false;
-        private int m_CSRCCount = 0;
-        private bool m_Marker = false;
-        private int m_PayloadType = 0;
-        private uint m_SourceId = 0;
-        private Protocol PrototolClient = new Protocol(ProtocolTypes.LH, Encoding.Default);
+        public void ToggleAudio()
+        {
+            if (Deafened == true) Deafened = false;
+            else Deafened = true;
+        }
+
+        public void RecordSoundFrom(RecordingDevice Device)
+        {
+            if (Connectedb)
+            {
+                StartRecordingFromSounddevice_Client(Device);
+            }
+            else
+            {
+                throw new NotConnectedException(this, "The call has not been connected yet!");
+            }
+        }
+
+        public void PlaySoundTo(PlaybackDevice Device)
+        {
+            if (Connectedb)
+            {
+                StartPlayingToSounddevice_Client(Device);
+            }
+            else
+            {
+                throw new NotConnectedException(this, "The call has not been connected yet!");
+            }
+        }
 
         public void JoinCall()
         {
@@ -66,23 +77,61 @@ namespace Luski.net.Sockets
             throw new NotImplementedException();
         }
 
-        public void SendData(string data)
+        private readonly Protocol PrototolClient = new Protocol(ProtocolTypes.LH, Encoding.Default);
+        private JitterBuffer RecordingJitterBuffer = new JitterBuffer(null, JitterBuffer, 20);
+        private JitterBuffer PlayingJitterBuffer = new JitterBuffer(null, JitterBuffer, 20);
+        private readonly Func<Exception, Task> errorin;
+        private event Func<JObject, Task> DataRecived;
+        private static readonly uint JitterBuffer = 5;
+        private readonly int BitsPerSample = 16;
+        private long SequenceNumber = 4596;
+        private readonly int Channels = 1;
+        private Recorder RecorderClient;
+        private bool Connectedb = false;
+        private bool recording = false;
+        private long m_TimeStamp = 0;
+        private Player PlayerClient;
+        private readonly ulong DM;
+
+        private void StopPlayingToSounddevice_Client()
         {
-            if (Connectedb) return;
-            Server.ServerOut.Send(JsonRequest.Send("Call Data", JsonRequest.SendData(data)).ToString());
+            if (PlayerClient != null)
+            {
+                PlayerClient.Close();
+                PlayerClient = null;
+            }
+
+            if (PlayingJitterBuffer != null)
+            {
+                PlayingJitterBuffer.Stop();
+            }
+        }
+
+        private async Task SocketAudioClient_DataRecived(JObject arg)
+        {
+            dynamic d = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(arg.ToString());
+            byte[] data = (byte[])d.Data;
+            PrototolClient.Receive_LH(this, data);
+        }
+
+        private void SendData(byte[] data)
+        {
+            if (!Connectedb) return;
+            JObject d = JsonRequest.Send("Call Data", JsonRequest.SendData(PrototolClient.ToBytes(data), DM));
+            Server.ServerOut.Send(d.ToString());
         }
 
         internal void Givedata(dynamic data)
         {
-            JObject @out = new JObject();
-            @out.Add("From", (ulong)data.Data.From);
-            @out.Add("Data", (string)data.Data.Data);
+            JObject @out = new JObject
+            {
+                { "From", (ulong)data.Data.From },
+                { "Data", (string)data.Data.Data }
+            };
             DataRecived.Invoke(@out);
         }
 
-        private bool Deafend = false;
-
-        internal int _samp;
+        private int _samp;
 
         internal int Samples
         {
@@ -95,13 +144,20 @@ namespace Luski.net.Sockets
                 _samp = value;
                 Connectedb = true;
                 Connected.Invoke();
-                StartPlayingToSounddevice_Client();
-                StartRecordingFromSounddevice_Client();
+                PlaySoundTo(Devices.GetDefaltPlaybackDevice());
+                RecordSoundFrom(Devices.GetDefaltRecordingDevice());
             }
         }
 
-        private void StartPlayingToSounddevice_Client()
+        private bool playing = false;
+
+        private void StartPlayingToSounddevice_Client(PlaybackDevice device)
         {
+            if (playing)
+            {
+                StopPlayingToSounddevice_Client();
+            }
+            playing = true;
             if (PlayingJitterBuffer != null)
             {
                 PlayingJitterBuffer.DataAvailable -= new JitterBuffer.DelegateDataAvailable(OnJitterBufferClientDataAvailablePlaying);
@@ -114,8 +170,7 @@ namespace Luski.net.Sockets
             if (PlayerClient == null)
             {
                 PlayerClient = new Player();
-                List<string> playbackNames = WinSound.GetPlaybackNames();
-                PlayerClient.Open(playbackNames[0], Samples, BitsPerSample, Channels, (int)JitterBuffer);
+                PlayerClient.Open(device.Name, Samples, BitsPerSample, Channels, (int)JitterBuffer);
             }
         }
 
@@ -127,7 +182,7 @@ namespace Luski.net.Sockets
                 {
                     if (PlayerClient.Opened)
                     {
-                        if (Deafend == false)
+                        if (Deafened == false)
                         {
                             byte[] linearBytes = Utils.MuLawToLinear(rtp.Data, BitsPerSample, Channels);
                             PlayerClient.PlayData(linearBytes, false);
@@ -142,35 +197,45 @@ namespace Luski.net.Sockets
             }
         }
 
-        private void StartRecordingFromSounddevice_Client()
+        private void StartRecordingFromSounddevice_Client(RecordingDevice device)
         {
             try
             {
-                if (recording == false)
+                if (recording)
                 {
-                    InitJitterBufferClientRecording();
-                    int bufferSize = 0;
-                    bufferSize = Utils.GetBytesPerInterval((uint)Samples, BitsPerSample, Channels) * (int)RecorderFactor;
+                    StopRecordingFromSounddevice_Client();
+                }
+                recording = true;
+                InitJitterBufferClientRecording();
+                int bufferSize = 0;
+                bufferSize = Utils.GetBytesPerInterval((uint)Samples, BitsPerSample, Channels) * 4;
 
-                    if (bufferSize > 0)
+                if (bufferSize > 0)
+                {
+                    RecorderClient = new Recorder();
+                    RecorderClient.DataRecorded += new Recorder.DelegateDataRecorded(OnDataReceivedFromSoundcard_Client);
+
+                    if (RecorderClient.Start(device.Name, Samples, BitsPerSample, Channels, 8, bufferSize))
                     {
-                        RecorderClient = new Recorder();
-                        List<string> recordingNames = WinSound.GetRecordingNames();
-                        RecorderClient.DataRecorded += new Recorder.DelegateDataRecorded(OnDataReceivedFromSoundcard_Client);
 
-                        if (RecorderClient.Start(recordingNames[0], Samples, BitsPerSample, Channels, m_SoundBufferCount, bufferSize))
-                        {
-
-                            RecordingJitterBuffer.Start();
-                        }
+                        RecordingJitterBuffer.Start();
                     }
-
                 }
             }
             catch (Exception ex)
             {
                 errorin.Invoke(ex);
             }
+        }
+
+        private void StopRecordingFromSounddevice_Client()
+        {
+            RecorderClient.Stop();
+
+            RecorderClient.DataRecorded -= new Recorder.DelegateDataRecorded(OnDataReceivedFromSoundcard_Client);
+            RecorderClient = null;
+
+            RecordingJitterBuffer.Stop();
         }
 
         private void InitJitterBufferClientRecording()
@@ -186,8 +251,11 @@ namespace Luski.net.Sockets
 
         private void OnJitterBufferClientDataAvailableRecording(object sender, RTPPacket rtp)
         {
-            byte[] rtpBytes = rtp.ToBytes();
-            SendData(Encoding.UTF8.GetString(rtpBytes));
+            if (Muted == false && rtp != null && rtp.Data != null && rtp.Data.Length > 0)
+            {
+                byte[] rtpBytes = rtp.ToBytes();
+                SendData(rtpBytes);
+            }
         }
 
         private void OnDataReceivedFromSoundcard_Client(byte[] data)
@@ -220,26 +288,27 @@ namespace Luski.net.Sockets
         {
             byte[] mulaws = Utils.LinearToMulaw(linearData, bitsPerSample, channels);
 
-            RTPPacket rtp = new RTPPacket();
-
-            rtp.Data = mulaws;
-            rtp.CSRCCount = m_CSRCCount;
-            rtp.Extension = m_Extension;
-            rtp.HeaderLength = RTPPacket.MinHeaderLength;
-            rtp.Marker = m_Marker;
-            rtp.Padding = m_Padding;
-            rtp.PayloadType = m_PayloadType;
-            rtp.Version = m_Version;
-            rtp.SourceId = m_SourceId;
+            RTPPacket rtp = new RTPPacket
+            {
+                Data = mulaws,
+                CSRCCount = 0,
+                Extension = false,
+                HeaderLength = RTPPacket.MinHeaderLength,
+                Marker = false,
+                Padding = false,
+                PayloadType = 0,
+                Version = 2,
+                SourceId = 0
+            };
 
             try
             {
-                rtp.SequenceNumber = Convert.ToUInt16(m_SequenceNumber);
-                m_SequenceNumber++;
+                rtp.SequenceNumber = Convert.ToUInt16(SequenceNumber);
+                SequenceNumber++;
             }
             catch (Exception)
             {
-                m_SequenceNumber = 0;
+                SequenceNumber = 0;
             }
             try
             {
@@ -252,6 +321,29 @@ namespace Luski.net.Sockets
             }
 
             return rtp;
+        }
+
+        private void OnProtocolClient_DataComplete(Object sender, Byte[] data)
+        {
+            try
+            {
+                if (PlayerClient != null && PlayerClient.Opened)
+                {
+                    RTPPacket rtp = new RTPPacket(data);
+
+                    if (rtp.Data != null)
+                    {
+                        if (PlayingJitterBuffer != null)
+                        {
+                            PlayingJitterBuffer.AddData(rtp);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
     }
 }

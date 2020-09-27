@@ -18,5 +18,17 @@ namespace Luski.net
                 EventName = Event;
             }
         }
+
+
+        [Serializable]
+        public class NotConnectedException : Exception
+        {
+            public NotConnectedException(object sender, string message) : base(message)
+            {
+                Sender = sender;
+            }
+
+            public object Sender { get; }
+        }
     }
 }

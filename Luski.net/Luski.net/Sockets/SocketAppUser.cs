@@ -15,10 +15,8 @@ namespace Luski.net.Sockets
         internal SocketAppUser(string Json):base(Json)
         {
             dynamic json = JsonConvert.DeserializeObject<dynamic>(Json);
-            JArray FriendReq = new JArray();
-            JArray Friend = new JArray();
-            FriendReq = DataBinder.Eval(json, "Friend Requests");
-            Friend = DataBinder.Eval(json, "Friends");
+            JArray FriendReq = DataBinder.Eval(json, "Friend Requests");
+            JArray Friend = DataBinder.Eval(json, "Friends");
             _Friends = new List<IRemoteUser>();
             _FriendRequests = new List<IRemoteUser>();
             foreach (JToken user in Friend)

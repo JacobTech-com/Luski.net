@@ -22,7 +22,7 @@ namespace Luski.net
         internal static bool CanRequest = false;
         internal static ulong SelectedChannel;
         internal static ulong ID;
-        internal static string Domain = "jacobtech.com";
+        internal static string Domain = "localhost:44396";
 
         public class CreateAccount : Login
         {
@@ -69,8 +69,10 @@ namespace Luski.net
                     ServerOut.OnMessage += DataFromServer;
                     ServerOut.WaitTime = new TimeSpan(0, 0, 5);
                     ServerOut.Connect();
-                    JObject Infermation = new JObject();
-                    Infermation.Add("Token", LoginToken);
+                    JObject Infermation = new JObject
+                    {
+                        { "Token", LoginToken }
+                    };
                     SendServer(JsonRequest.Send("Login", Infermation));
                     while (Token == null && Error == null)
                     {
@@ -128,8 +130,10 @@ namespace Luski.net
                     ServerOut.OnMessage += DataFromServer;
                     ServerOut.WaitTime = new TimeSpan(0, 0, 5);
                     ServerOut.Connect();
-                    JObject Infermation = new JObject();
-                    Infermation.Add("Token", LoginToken);
+                    JObject Infermation = new JObject
+                    {
+                        { "Token", LoginToken }
+                    };
                     SendServer(JsonRequest.Send("Login", Infermation));
                     while (Token == null && Error == null)
                     {
@@ -166,7 +170,7 @@ namespace Luski.net
             /// <returns><seealso cref="IAudioClient"/></returns>
             public IAudioClient CreateAudioClient(ulong ID)
             {
-                if (AudioClient != null) throw new Exception("audio client alread created");
+               // if (AudioClient != null) throw new Exception("audio client alread created");
                 SocketAudioClient client = new SocketAudioClient(ID, OnError);
                 AudioClient = client;
                 return client;
@@ -275,13 +279,12 @@ namespace Luski.net
                         if (AudioClient != null)
                         {
                             AudioClient.Samples = (int)data.Data.SamplesPerSecond;
-                            AudioClient.Givedata((string)data);
                         }
                         break;
                     case "Call Data":
                         if (AudioClient != null)
                         {
-                            AudioClient.Givedata((string)data);
+                            AudioClient.Givedata(data);
                         }
                         break;
                     default:

@@ -38,13 +38,15 @@ namespace Luski.net.Sockets
                     Status = UserStatus.Invisible;
                     break;
             }
-            JObject d = new JObject();
-            d.Add("ID", ID);
-            d.Add("Username", Username);
-            d.Add("Tag", Tag);
-            d.Add("SelectedChannel", SelectedChannel);
-            d.Add("Status", ((string)data.Status).ToLower());
-            data = d;
+            JObject d = new JObject
+            {
+                { "ID", ID },
+                { "Username", Username },
+                { "Tag", Tag },
+                { "SelectedChannel", SelectedChannel },
+                { "Status", ((string)data.Status).ToLower() }
+            };
+            Data = d;
         }
 
         public ulong ID { get; }
@@ -52,10 +54,10 @@ namespace Luski.net.Sockets
         public int Tag { get; }
         public virtual ulong SelectedChannel { get; internal set; }
         public virtual UserStatus Status { get; internal set; }
-        internal JObject data { get; set; }
+        internal JObject Data { get; set; }
         public override string ToString()
         {
-            return data.ToString();
+            return Data.ToString();
         }
         public Image GetAvatar()
         {

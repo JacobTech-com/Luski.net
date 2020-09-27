@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Luski.net.Sound
 {
     public class JitterBuffer
     {
-        public JitterBuffer(Object sender, uint maxRTPPackets, uint timerIntervalInMilliseconds)
+        public JitterBuffer(object sender, uint maxRTPPackets, uint timerIntervalInMilliseconds)
         {
             if (maxRTPPackets < 2)
             {
@@ -15,45 +13,25 @@ namespace Luski.net.Sound
             }
 
             m_Sender = sender;
-            m_MaxRTPPackets = maxRTPPackets;
-            m_TimerIntervalInMilliseconds = timerIntervalInMilliseconds;
+            Maximum = maxRTPPackets;
+            IntervalInMilliseconds = timerIntervalInMilliseconds;
 
             Init();
         }
 
-        private Object m_Sender = null;
-        private uint m_MaxRTPPackets = 10;
-        private uint m_TimerIntervalInMilliseconds = 20;
-        private global::Luski.net.Sound.EventTimer m_Timer = new global::Luski.net.Sound.EventTimer();
-        private System.Collections.Generic.Queue<RTPPacket> m_Buffer = new Queue<RTPPacket>();
+        private readonly object m_Sender = null;
+        private readonly EventTimer m_Timer = new EventTimer();
+        private readonly Queue<RTPPacket> m_Buffer = new Queue<RTPPacket>();
         private RTPPacket m_LastRTPPacket = new RTPPacket();
         private bool m_Underflow = true;
         private bool m_Overflow = false;
 
-        public delegate void DelegateDataAvailable(Object sender, RTPPacket packet);
+        public delegate void DelegateDataAvailable(object sender, RTPPacket packet);
         public event DelegateDataAvailable DataAvailable;
 
-        public int Length
-        {
-            get
-            {
-                return m_Buffer.Count;
-            }
-        }
-        public uint Maximum
-        {
-            get
-            {
-                return m_MaxRTPPackets;
-            }
-        }
-        public uint IntervalInMilliseconds
-        {
-            get
-            {
-                return m_TimerIntervalInMilliseconds;
-            }
-        }
+        public int Length => m_Buffer.Count;
+        public uint Maximum { get; } = 10;
+        public uint IntervalInMilliseconds { get; } = 20;
         private void Init()
         {
             InitTimer();
@@ -64,7 +42,7 @@ namespace Luski.net.Sound
         }
         public void Start()
         {
-            m_Timer.Start(m_TimerIntervalInMilliseconds, 0);
+            m_Timer.Start(IntervalInMilliseconds, 0);
             m_Underflow = true;
         }
         public void Stop()
@@ -82,7 +60,7 @@ namespace Luski.net.Sound
                     {
                         if (m_Overflow)
                         {
-                            if (m_Buffer.Count <= m_MaxRTPPackets / 2)
+                            if (m_Buffer.Count <= Maximum / 2)
                             {
                                 m_Overflow = false;
                             }
@@ -90,7 +68,7 @@ namespace Luski.net.Sound
 
                         if (m_Underflow)
                         {
-                            if (m_Buffer.Count < m_MaxRTPPackets / 2)
+                            if (m_Buffer.Count < Maximum / 2)
                             {
                                 return;
                             }
@@ -119,7 +97,7 @@ namespace Luski.net.Sound
             }
             catch (Exception ex)
             {
-                Console.WriteLine(String.Format("JitterBuffer.cs | OnTimerTick() | {0}", ex.Message));
+                Console.WriteLine(string.Format("JitterBuffer.cs | OnTimerTick() | {0}", ex.Message));
             }
         }
         public void AddData(RTPPacket packet)
@@ -128,7 +106,7 @@ namespace Luski.net.Sound
             {
                 if (m_Overflow == false)
                 {
-                    if (m_Buffer.Count <= m_MaxRTPPackets)
+                    if (m_Buffer.Count <= Maximum)
                     {
                         m_Buffer.Enqueue(packet);
                     }
@@ -140,7 +118,7 @@ namespace Luski.net.Sound
             }
             catch (Exception ex)
             {
-                Console.WriteLine(String.Format("JitterBuffer.cs | AddData() | {0}", ex.Message));
+                Console.WriteLine(string.Format("JitterBuffer.cs | AddData() | {0}", ex.Message));
             }
         }
     }

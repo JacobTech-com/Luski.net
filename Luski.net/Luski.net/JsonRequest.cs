@@ -1,50 +1,56 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 
 namespace Luski.net
 {
     internal static class JsonRequest
     {
-        internal static JObject SendData(string Data)
+        internal static JObject SendData(byte[] Data, ulong to)
         {
-            JObject @out = new JObject();
-            @out.Add("Data", Data);
+            JObject @out = new JObject
+            {
+                { "Data", Data },
+                { "Id", to },
+                { "Type", "DM" }
+            };
             return @out;
         }
 
         internal static JObject JoinCall(ulong DM)
         {
-            JObject @out = new JObject();
-            @out.Add("Type", "DM");
-            @out.Add("Id", DM);
+            JObject @out = new JObject
+            {
+                { "Type", "DM" },
+                { "Id", DM }
+            };
             return @out;
         }
 
         internal static JObject Send(string Request, JObject Data)
         {
-            JObject @out = new JObject();
-            @out.Add("Type", Request);
-            @out.Add("Data", Data);
+            JObject @out = new JObject
+            {
+                { "Type", Request },
+                { "Data", Data }
+            };
             return @out;
         }
 
         internal static JObject Message(string Message, ulong Channel)
         {
-            JObject @out = new JObject();
-            @out.Add("Channel_User_Id", Channel);
-            @out.Add("Content", Message);
+            JObject @out = new JObject
+            {
+                { "Channel_User_Id", Channel },
+                { "Content", Message }
+            };
             return @out;
         }
 
         internal static JObject Channel(ulong User)
         {
-            JObject @out = new JObject();
-            @out.Add("Id", User);
+            JObject @out = new JObject
+            {
+                { "Id", User }
+            };
             return @out;
         }
 
@@ -69,23 +75,29 @@ namespace Luski.net
                     stat = "online";
                     break;
             }
-            JObject @out = new JObject();
-            @out.Add("Status", stat);
+            JObject @out = new JObject
+            {
+                { "Status", stat }
+            };
             return @out;
         }
 
         internal static JObject FriendRequestResult(ulong User, bool Result)
         {
-            JObject @out = new JObject();
-            @out.Add("Id", User);
-            @out.Add("Result", Result);
+            JObject @out = new JObject
+            {
+                { "Id", User },
+                { "Result", Result }
+            };
             return @out;
         }
 
         internal static JObject FriendRequest(ulong User)
         {
-            JObject @out = new JObject();
-            @out.Add("Id", User);
+            JObject @out = new JObject
+            {
+                { "Id", User }
+            };
             return @out;
         }
     }

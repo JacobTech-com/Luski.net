@@ -103,8 +103,7 @@ namespace Luski.net.Sockets
                 if (string.IsNullOrEmpty(error))
                 {
                     List<SocketMessage> messages = new List<SocketMessage>();
-                    JArray msgs = new JArray();
-                    msgs = DataBinder.Eval(data, "Messages");
+                    JArray msgs = DataBinder.Eval(data, "Messages");
                     foreach (JToken msg in msgs)
                     {
                         messages.Add(new SocketMessage(msg.ToString()));
@@ -137,8 +136,7 @@ namespace Luski.net.Sockets
                 if (string.IsNullOrEmpty(error))
                 {
                     List<SocketMessage> messages = new List<SocketMessage>();
-                    JArray msgs = new JArray();
-                    msgs = DataBinder.Eval(data, "Messages");
+                    JArray msgs = DataBinder.Eval(data, "Messages");
                     foreach (JToken msg in msgs)
                     {
                         messages.Add(new SocketMessage(msg.ToString()));
@@ -154,10 +152,12 @@ namespace Luski.net.Sockets
 
         public override string ToString()
         {
-            JObject @out = new JObject();
-            @out.Add("Id", Id);
-            @out.Add("Title", Title);
-            @out.Add("Description", Description);
+            JObject @out = new JObject
+            {
+                { "Id", Id },
+                { "Title", Title },
+                { "Description", Description }
+            };
             return @out.ToString();
         }
     }
