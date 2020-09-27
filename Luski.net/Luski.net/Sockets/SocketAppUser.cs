@@ -25,7 +25,8 @@ namespace Luski.net.Sockets
             }
             foreach (JToken user in FriendReq)
             {
-                _FriendRequests.Add(new SocketRemoteUser(ulong.Parse(user["user_id"].ToString())));
+                ulong id = ulong.Parse(user["user_id"].ToString()) == ID ? ulong.Parse(user["from"].ToString()) : ulong.Parse(user["user_id"].ToString());
+                _FriendRequests.Add(new SocketRemoteUser(id));
             }
         }
 
