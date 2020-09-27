@@ -1,18 +1,14 @@
 ﻿using Luski.net.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web.UI;
 
 namespace Luski.net.Sockets
 {
     internal class SocketAppUser : SocketUserBase, IAppUser
     {
-        internal SocketAppUser(string Json):base(Json)
+        internal SocketAppUser(string Json) : base(Json)
         {
             dynamic json = JsonConvert.DeserializeObject<dynamic>(Json);
             JArray FriendReq = DataBinder.Eval(json, "Friend Requests");
@@ -31,23 +27,11 @@ namespace Luski.net.Sockets
         }
 
         public string Email { get; internal set; }
-        public IReadOnlyList<IRemoteUser> Friends 
-        {
-            get
-            {
-                return _Friends.AsReadOnly();
-            }
-        }
-        public IReadOnlyList<IRemoteUser> FriendRequests
-        {
-            get
-            {
-                return _FriendRequests.AsReadOnly();
-            }
-        }
+        public IReadOnlyList<IRemoteUser> Friends => _Friends.AsReadOnly();
+        public IReadOnlyList<IRemoteUser> FriendRequests => _FriendRequests.AsReadOnly();
 
-        private List<IRemoteUser> _Friends;
-        private List<IRemoteUser> _FriendRequests;
+        private readonly List<IRemoteUser> _Friends;
+        private readonly List<IRemoteUser> _FriendRequests;
 
         internal void AddFriend(SocketRemoteUser User)
         {

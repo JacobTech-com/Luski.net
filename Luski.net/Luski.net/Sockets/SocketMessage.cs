@@ -1,7 +1,7 @@
-﻿using System;
-using System.Net;
-using Luski.net.Interfaces;
+﻿using Luski.net.Interfaces;
 using Newtonsoft.Json;
+using System;
+using System.Net;
 
 namespace Luski.net.Sockets
 {

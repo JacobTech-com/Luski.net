@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Luski.net
 {
@@ -39,7 +37,9 @@ namespace Luski.net
                         sb.Append(x);
 
                         if (item < length)
+                        {
                             sb.Append(",");
+                        }
                     }
 
                     return sb.ToString();

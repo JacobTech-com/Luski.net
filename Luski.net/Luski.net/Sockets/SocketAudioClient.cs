@@ -1,12 +1,10 @@
 ﻿using Luski.net.Interfaces;
+using Luski.net.Sound;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using Luski.net.Sound;
+using System.Text;
 using System.Threading.Tasks;
 using static Luski.net.Exceptions;
-using System.Text;
 
 namespace Luski.net.Sockets
 {
@@ -22,21 +20,33 @@ namespace Luski.net.Sockets
         }
 
         public event Func<Task> Connected;
-        
+
         public bool Muted { get; private set; }
 
         public bool Deafened { get; private set; }
 
         public void ToggleMic()
         {
-            if (Muted == true) Muted = false;
-            else Muted = true;
+            if (Muted == true)
+            {
+                Muted = false;
+            }
+            else
+            {
+                Muted = true;
+            }
         }
 
         public void ToggleAudio()
         {
-            if (Deafened == true) Deafened = false;
-            else Deafened = true;
+            if (Deafened == true)
+            {
+                Deafened = false;
+            }
+            else
+            {
+                Deafened = true;
+            }
         }
 
         public void RecordSoundFrom(RecordingDevice Device)
@@ -65,7 +75,10 @@ namespace Luski.net.Sockets
 
         public void JoinCall()
         {
-            if (Connected == null) throw new MissingEventException("Connected");
+            if (Connected == null)
+            {
+                throw new MissingEventException("Connected");
+            }
             else
             {
                 Server.ServerOut.Send(JsonRequest.Send("Join Call", JsonRequest.JoinCall(DM)).ToString());
@@ -116,7 +129,11 @@ namespace Luski.net.Sockets
 
         private void SendData(byte[] data)
         {
-            if (!Connectedb) return;
+            if (!Connectedb)
+            {
+                return;
+            }
+
             JObject d = JsonRequest.Send("Call Data", JsonRequest.SendData(PrototolClient.ToBytes(data), DM));
             Server.ServerOut.Send(d.ToString());
         }
@@ -135,10 +152,7 @@ namespace Luski.net.Sockets
 
         internal int Samples
         {
-            get
-            {
-                return _samp;
-            }
+            get => _samp;
             set
             {
                 _samp = value;
@@ -323,7 +337,7 @@ namespace Luski.net.Sockets
             return rtp;
         }
 
-        private void OnProtocolClient_DataComplete(Object sender, Byte[] data)
+        private void OnProtocolClient_DataComplete(object sender, byte[] data)
         {
             try
             {

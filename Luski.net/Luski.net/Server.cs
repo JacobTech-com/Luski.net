@@ -1,15 +1,14 @@
-﻿using Newtonsoft.Json;
+﻿using Luski.net.Interfaces;
+using Luski.net.Sockets;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Net;
-using System.Threading.Tasks;
-using WebSocketSharp;
-using Luski.net.Sockets;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Drawing;
 using System.IO;
-using Luski.net.Interfaces;
+using System.Net;
+using System.Text;
+using System.Threading.Tasks;
+using WebSocketSharp;
 
 namespace Luski.net
 {
@@ -26,7 +25,7 @@ namespace Luski.net
 
         public class CreateAccount : Login
         {
-            public CreateAccount(string Email, string Password, string Username, Image PFP):base(Email, Password, Username, PFP)
+            public CreateAccount(string Email, string Password, string Username, Image PFP) : base(Email, Password, Username, PFP)
             {
 
             }
@@ -64,7 +63,11 @@ namespace Luski.net
                 {
                     string LoginToken = (string)json["Login Token"];
                     string Base = info["TCP Server"];
-                    if (info["TCP Port"] != "443") Base += $":{info["TCP Port"]}";
+                    if (info["TCP Port"] != "443")
+                    {
+                        Base += $":{info["TCP Port"]}";
+                    }
+
                     ServerOut = new WebSocket($"wss://{Base}/Luski");
                     ServerOut.OnMessage += DataFromServer;
                     ServerOut.WaitTime = new TimeSpan(0, 0, 5);
@@ -125,7 +128,11 @@ namespace Luski.net
                 {
                     string LoginToken = (string)json["Login Token"];
                     string Base = info["TCP Server"];
-                    if (info["TCP Port"] != "443") Base += $":{info["TCP Port"]}";
+                    if (info["TCP Port"] != "443")
+                    {
+                        Base += $":{info["TCP Port"]}";
+                    }
+
                     ServerOut = new WebSocket($"wss://{Base}/Luski");
                     ServerOut.OnMessage += DataFromServer;
                     ServerOut.WaitTime = new TimeSpan(0, 0, 5);
@@ -170,7 +177,7 @@ namespace Luski.net
             /// <returns><seealso cref="IAudioClient"/></returns>
             public IAudioClient CreateAudioClient(ulong ID)
             {
-               // if (AudioClient != null) throw new Exception("audio client alread created");
+                // if (AudioClient != null) throw new Exception("audio client alread created");
                 SocketAudioClient client = new SocketAudioClient(ID, OnError);
                 AudioClient = client;
                 return client;
@@ -307,13 +314,7 @@ namespace Luski.net
                 return new SocketChannel(DMUserID);
             }
 
-            public IAppUser CurrentUser 
-            {
-                get
-                {
-                    return User;
-                }
-            }
+            public IAppUser CurrentUser => User;
 
             internal SocketAppUser User { get; }
         }

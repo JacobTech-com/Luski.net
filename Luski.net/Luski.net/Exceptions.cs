@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Luski.net
 {
@@ -13,7 +9,7 @@ namespace Luski.net
         public class MissingEventException : Exception
         {
             public string EventName;
-            public MissingEventException(string Event) : base(Event) 
+            public MissingEventException(string Event) : base(Event)
             {
                 EventName = Event;
             }

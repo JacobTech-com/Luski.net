@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Luski.net
+﻿namespace Luski.net
 {
     public enum UserStatus
     {

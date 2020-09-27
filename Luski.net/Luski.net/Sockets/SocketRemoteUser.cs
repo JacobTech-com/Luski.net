@@ -1,18 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using Luski.net;
-using Luski.net.Interfaces;
+﻿using Luski.net.Interfaces;
 using Newtonsoft.Json;
+using System.Net;
 
 namespace Luski.net.Sockets
 {
-    internal class SocketRemoteUser : SocketUserBase , IRemoteUser
+    internal class SocketRemoteUser : SocketUserBase, IRemoteUser
     {
-        internal SocketRemoteUser(ulong ID):this(IdToJson(ID))
+        internal SocketRemoteUser(ulong ID) : this(IdToJson(ID))
         {
 
         }
@@ -36,7 +30,7 @@ namespace Luski.net.Sockets
             return data;
         }
 
-        internal SocketRemoteUser(string json):base(json)
+        internal SocketRemoteUser(string json) : base(json)
         {
             dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
             if ((ulong)data.Id != Server.ID)

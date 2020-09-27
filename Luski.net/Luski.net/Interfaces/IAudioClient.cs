@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Luski.net.Sound;
+using System;
 using System.Threading.Tasks;
-using Luski.net.Sound;
 using static Luski.net.Exceptions;
 
 namespace Luski.net.Interfaces

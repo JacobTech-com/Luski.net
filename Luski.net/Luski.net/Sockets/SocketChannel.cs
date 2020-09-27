@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Luski.net.Interfaces;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Web.UI;
-using Luski.net.Interfaces;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Luski.net.Sockets
 {
@@ -85,8 +85,14 @@ namespace Luski.net.Sockets
 
         public IReadOnlyList<IMessage> GetMessages(ulong MRID, int count = 50)
         {
-            if (count > 200) throw new Exception("You can not request more than 200 messages at a time");
-            else if (count < 1) throw new Exception("You must request at least 1 message");
+            if (count > 200)
+            {
+                throw new Exception("You can not request more than 200 messages at a time");
+            }
+            else if (count < 1)
+            {
+                throw new Exception("You must request at least 1 message");
+            }
             else
             {
                 string json;
@@ -119,8 +125,14 @@ namespace Luski.net.Sockets
 
         public IReadOnlyList<IMessage> GetMessages(int count = 50)
         {
-            if (count > 200) throw new Exception("You can not request more than 200 messages at a time");
-            else if (count < 1) throw new Exception("You must request at least 1 message");
+            if (count > 200)
+            {
+                throw new Exception("You can not request more than 200 messages at a time");
+            }
+            else if (count < 1)
+            {
+                throw new Exception("You must request at least 1 message");
+            }
             else
             {
                 string json;
