@@ -10,7 +10,7 @@ namespace Luski.net
     {
         internal static string MyPublicKey;
         private static readonly UnicodeEncoding Encoder = new UnicodeEncoding();
-        private static readonly RSACryptoServiceProvider RSA = new RSACryptoServiceProvider(1024);
+        private static readonly RSACryptoServiceProvider RSA = new RSACryptoServiceProvider(2048);
         private static string myPrivateKey;
 
         internal static void GenerateKeys()
