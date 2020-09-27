@@ -22,7 +22,7 @@ namespace Luski.net
         internal static bool CanRequest = false;
         internal static ulong SelectedChannel;
         internal static ulong ID;
-        internal static string Domain = "localhost:44396";
+        internal static string Domain = "JacobTech.com";
 
         public class CreateAccount : Login
         {
