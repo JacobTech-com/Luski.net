@@ -9,18 +9,17 @@ namespace Luski.net
             JObject @out = new JObject
             {
                 { "Data", Data },
-                { "Id", to },
-                { "Type", "DM" }
+                { "Id", to }
             };
             return @out;
         }
 
-        internal static JObject JoinCall(ulong DM)
+        internal static JObject JoinCall(ulong Channel)
         {
             JObject @out = new JObject
             {
                 { "Type", "DM" },
-                { "Id", DM }
+                { "Id", Channel }
             };
             return @out;
         }
@@ -39,17 +38,17 @@ namespace Luski.net
         {
             JObject @out = new JObject
             {
-                { "Channel_User_Id", Channel },
+                { "Channel_Id", Channel },
                 { "Content", Message }
             };
             return @out;
         }
 
-        internal static JObject Channel(ulong User)
+        internal static JObject Channel(ulong Channel)
         {
             JObject @out = new JObject
             {
-                { "Id", User }
+                { "Id", Channel }
             };
             return @out;
         }

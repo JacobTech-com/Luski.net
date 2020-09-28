@@ -12,6 +12,7 @@ namespace Luski.net.Interfaces
         IMessage GetMessage(ulong ID);
         IReadOnlyList<IMessage> GetMessages(ulong MRID, int count = 50);
         IReadOnlyList<IMessage> GetMessages(int count = 50);
+        IReadOnlyList<IUser> Members { get; }
         string ToString();
     }
 }

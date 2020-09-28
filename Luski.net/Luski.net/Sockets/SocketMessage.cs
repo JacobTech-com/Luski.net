@@ -10,13 +10,13 @@ namespace Luski.net.Sockets
         internal SocketMessage(string json)
         {
             dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
-            ChannelId = (ulong)data.Channel_User_Id;
+            ChannelId = (ulong)data.Channel_Id;
             AuthorId = (ulong)data.User_Id;
             Context = (string)data.Content;
             Id = (ulong)data.Id;
         }
 
-        internal SocketMessage(ulong ID, ulong DM)
+        internal SocketMessage(ulong ID, ulong Channel)
         {
             string json;
             while (true)
@@ -27,8 +27,8 @@ namespace Luski.net.Sockets
                     {
                         web.Headers.Add("Token", Server.Token);
                         web.Headers.Add("MSG_Id", ID.ToString());
-                        web.Headers.Add("User_Id", DM.ToString());
-                        json = web.DownloadString($"https://{Server.Domain}/Luski/api/socketdmmessage");
+                        web.Headers.Add("Channel_Id", Channel.ToString());
+                        json = web.DownloadString($"https://{Server.Domain}/Luski/api/socketmessage");
                     }
                     break;
                 }
@@ -57,9 +57,28 @@ namespace Luski.net.Sockets
         {
             return new SocketChannel(ChannelId);
         }
-        public IRemoteUser GetAuthor()
+        public IUser GetAuthor()
         {
-            return new SocketRemoteUser(AuthorId);
+            return new SocketUserBase(IdToJson(AuthorId));
+        }
+
+        private static string IdToJson(ulong id)
+        {
+            string data;
+            while (true)
+            {
+                if (Server.CanRequest)
+                {
+                    using (WebClient web = new WebClient())
+                    {
+                        web.Headers.Add("Token", Server.Token);
+                        web.Headers.Add("Id", id.ToString());
+                        data = web.DownloadString($"https://{Server.Domain}/Luski/api/socketuser");
+                    }
+                    break;
+                }
+            }
+            return data;
         }
     }
 }

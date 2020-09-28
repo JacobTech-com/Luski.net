@@ -5,7 +5,7 @@
         ulong Id { get; }
         string Context { get; }
         IChannel GetChannel();
-        IRemoteUser GetAuthor();
+        IUser GetAuthor();
         string ToString();
     }
 }

@@ -24,12 +24,41 @@ namespace Luski.net.Sockets
                     case "dm":
                         Type = ChannelType.DM;
                         break;
+                    case "group":
+                        Type = ChannelType.GROUP;
+                        break;
+                }
+                _members = new List<IUser>();
+                JArray mem = DataBinder.Eval(data, "Members");
+                foreach (JToken person in mem)
+                {
+                    ulong per = ulong.Parse(person.ToString());
+                    _members.Add(new SocketUserBase(IdToJson(per)));
                 }
             }
             else
             {
                 throw new Exception(error);
             }
+        }
+
+        private static string IdToJson(ulong id)
+        {
+            string data;
+            while (true)
+            {
+                if (Server.CanRequest)
+                {
+                    using (WebClient web = new WebClient())
+                    {
+                        web.Headers.Add("Token", Server.Token);
+                        web.Headers.Add("Id", id.ToString());
+                        data = web.DownloadString($"https://{Server.Domain}/Luski/api/socketuser");
+                    }
+                    break;
+                }
+            }
+            return data;
         }
 
         internal SocketChannel(ulong id)
@@ -43,7 +72,7 @@ namespace Luski.net.Sockets
                     {
                         web.Headers.Add("Token", Server.Token);
                         web.Headers.Add("Id", id.ToString());
-                        json = web.DownloadString($"https://{Server.Domain}/Luski/api/SocketDMChannel");
+                        json = web.DownloadString($"https://{Server.Domain}/Luski/api/SocketChannel");
                     }
                     break;
                 }
@@ -60,6 +89,16 @@ namespace Luski.net.Sockets
                     case "dm":
                         Type = ChannelType.DM;
                         break;
+                    case "group":
+                        Type = ChannelType.GROUP;
+                        _members = new List<IUser>();
+                        JArray mem = DataBinder.Eval(data, "Members");
+                        foreach (JToken person in mem)
+                        {
+                            ulong per = ulong.Parse(person.ToString());
+                            _members.Add(new SocketUserBase(IdToJson(per)));
+                        }
+                        break;
                 }
             }
             else
@@ -72,6 +111,10 @@ namespace Luski.net.Sockets
         public string Title { get; }
         public string Description { get; }
         public ChannelType Type { get; }
+
+        private List<IUser> _members = null;
+
+        public IReadOnlyList<IUser> Members => _members.AsReadOnly();
 
         public void SendMessage(string Message)
         {
@@ -102,7 +145,7 @@ namespace Luski.net.Sockets
                     web.Headers.Add("User_Id", Id.ToString());
                     web.Headers.Add("Messages", count.ToString());
                     web.Headers.Add("MostRecentID", MRID.ToString());
-                    json = web.DownloadString($"https://{Server.Domain}/Luski/api/SocketDMBulkMessage");
+                    json = web.DownloadString($"https://{Server.Domain}/Luski/api/SocketBulkMessage");
                 }
                 dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
                 string error = (string)data.error;
@@ -141,7 +184,7 @@ namespace Luski.net.Sockets
                     web.Headers.Add("Token", Server.Token);
                     web.Headers.Add("User_Id", Id.ToString());
                     web.Headers.Add("Messages", count.ToString());
-                    json = web.DownloadString($"https://{Server.Domain}/Luski/api/SocketDMBulkMessage");
+                    json = web.DownloadString($"https://{Server.Domain}/Luski/api/SocketBulkMessage");
                 }
                 dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
                 string error = (string)data.error;

@@ -3,5 +3,6 @@
     public enum ChannelType
     {
         DM,
+        GROUP,
     }
 }

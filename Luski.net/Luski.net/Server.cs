@@ -19,8 +19,7 @@ namespace Luski.net
         internal static string Token = null;
         internal static string Error = null;
         internal static bool CanRequest = false;
-        internal static ulong SelectedChannel;
-        internal static ulong ID;
+        internal static SocketAppUser _user;
         internal static string Domain = "JacobTech.com";
 
         public class CreateAccount : Login
@@ -93,10 +92,8 @@ namespace Luski.net
                         web.Headers.Add("Id", Encoding.UTF8.GetString(Convert.FromBase64String(Token.Split('.')[0])));
                         data = web.DownloadString($"https://{Domain}/Luski/api/SocketUser");
                     }
-                    User = new SocketAppUser(data);
-                    ID = CurrentUser.ID;
-                    SelectedChannel = CurrentUser.SelectedChannel;
-                    User.Email = Email;
+                    _user = new SocketAppUser(data);
+                    _user.Email = Email;
                     UpdateStatus(UserStatus.Online);
                 }
                 else
@@ -158,10 +155,8 @@ namespace Luski.net
                         web.Headers.Add("Id", Encoding.UTF8.GetString(Convert.FromBase64String(Token.Split('.')[0])));
                         data = web.DownloadString($"https://{Domain}/Luski/api/SocketUser");
                     }
-                    User = new SocketAppUser(data);
-                    ID = CurrentUser.ID;
-                    SelectedChannel = CurrentUser.SelectedChannel;
-                    User.Email = Email;
+                    _user = new SocketAppUser(data);
+                    _user.Email = Email;
                     UpdateStatus(UserStatus.Online);
                 }
                 else
@@ -173,7 +168,7 @@ namespace Luski.net
             /// <summary>
             /// Creates an audio client with an user <paramref name="ID"/> you want to talk to
             /// </summary>
-            /// <param name="ID">The user <see cref="IUser.ID"/> you want to talk to</param>
+            /// <param name="ID">The user <see cref="IChannel.ID"/> you want to talk to</param>
             /// <returns><seealso cref="IAudioClient"/></returns>
             public IAudioClient CreateAudioClient(ulong ID)
             {
@@ -196,19 +191,18 @@ namespace Luski.net
             public void UpdateStatus(UserStatus Status)
             {
                 SendServer(JsonRequest.Send("Status Update", JsonRequest.Status(Status)));
-                User.Status = Status;
+                _user.Status = Status;
             }
 
-            public void ChangeChannel(ulong DM)
+            public void ChangeChannel(ulong Channel)
             {
-                SendServer(JsonRequest.Send("Change Channel", JsonRequest.Channel(DM)));
-                User.SelectedChannel = DM;
-                SelectedChannel = DM;
+                SendServer(JsonRequest.Send("Change Channel", JsonRequest.Channel(Channel)));
+                _user.SelectedChannel = Channel;
             }
 
-            public void SendMessage(string Message, ulong DM)
+            public void SendMessage(string Message, ulong Channel)
             {
-                SendServer(JsonRequest.Send("Message Create", JsonRequest.Message(Message, DM)));
+                SendServer(JsonRequest.Send("Message Create", JsonRequest.Message(Message, Channel)));
             }
 
             private void DataFromServer(object sender, MessageEventArgs e)
@@ -299,9 +293,9 @@ namespace Luski.net
                 }
             }
 
-            public IMessage GetMessage(ulong DmUserId, ulong MessageId)
+            public IMessage GetMessage(ulong Channel, ulong MessageId)
             {
-                return new SocketMessage(MessageId, DmUserId);
+                return new SocketMessage(MessageId, Channel);
             }
 
             public IRemoteUser GetUser(ulong UserID)
@@ -309,14 +303,14 @@ namespace Luski.net
                 return new SocketRemoteUser(UserID);
             }
 
-            public IChannel GetDMChannel(ulong DMUserID)
+            public IChannel GetChannel(ulong Channel)
             {
-                return new SocketChannel(DMUserID);
+                return new SocketChannel(Channel);
             }
 
-            public IAppUser CurrentUser => User;
+            public IAppUser CurrentUser => _user;
 
-            internal SocketAppUser User { get; }
+            internal SocketAppUser User => _user;
         }
 
         internal static void SendServer(JObject data)

@@ -33,7 +33,8 @@ namespace Luski.net.Sockets
         internal SocketRemoteUser(string json) : base(json)
         {
             dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
-            if ((ulong)data.Id != Server.ID)
+            Channel = null;
+            if ((ulong)data.Id != Server._user.ID)
             {
                 switch (((string)data["Friend Status"]).ToLower())
                 {
@@ -42,6 +43,22 @@ namespace Luski.net.Sockets
                         break;
                     case "friends":
                         FriendStatus = FriendStatus.Friends;
+                        
+                        foreach (IChannel chan in Server._user.Channels)
+                        {
+                            if (chan.Type == ChannelType.DM)
+                            {
+                                foreach (IUser mem in chan.Members)
+                                {
+                                    if (mem.ID == ID)
+                                    {
+                                        Channel = chan;
+                                        break;
+                                    }
+                                }
+                                break;
+                            }
+                        }
                         break;
                     case "pendingout":
                         FriendStatus = FriendStatus.PendingOut;
@@ -58,5 +75,7 @@ namespace Luski.net.Sockets
         }
 
         public FriendStatus FriendStatus { get; }
+
+        public IChannel Channel { get; }
     }
 }

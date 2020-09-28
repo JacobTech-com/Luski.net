@@ -13,6 +13,8 @@ namespace Luski.net.Sockets
             dynamic json = JsonConvert.DeserializeObject<dynamic>(Json);
             JArray FriendReq = DataBinder.Eval(json, "Friend Requests");
             JArray Friend = DataBinder.Eval(json, "Friends");
+            JArray Chan = DataBinder.Eval(json, "Channels");
+            _Channels = new List<IChannel>();
             _Friends = new List<IRemoteUser>();
             _FriendRequests = new List<IRemoteUser>();
             foreach (JToken user in Friend)
@@ -24,14 +26,21 @@ namespace Luski.net.Sockets
                 ulong id = ulong.Parse(user["user_id"].ToString()) == ID ? ulong.Parse(user["from"].ToString()) : ulong.Parse(user["user_id"].ToString());
                 _FriendRequests.Add(new SocketRemoteUser(id));
             }
+            foreach (JToken channel in Chan)
+            {
+                _Channels.Add(new SocketChannel(ulong.Parse(channel.ToString())));
+            }
         }
 
         public string Email { get; internal set; }
         public IReadOnlyList<IRemoteUser> Friends => _Friends.AsReadOnly();
         public IReadOnlyList<IRemoteUser> FriendRequests => _FriendRequests.AsReadOnly();
 
+        public IReadOnlyList<IChannel> Channels => _Channels.AsReadOnly();
+
         private readonly List<IRemoteUser> _Friends;
         private readonly List<IRemoteUser> _FriendRequests;
+        private readonly List<IChannel> _Channels;
 
         internal void AddFriend(SocketRemoteUser User)
         {

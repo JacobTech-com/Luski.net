@@ -3,5 +3,7 @@
     public interface IRemoteUser : IUser
     {
         FriendStatus FriendStatus { get; }
+
+        IChannel Channel { get; }
     }
 }

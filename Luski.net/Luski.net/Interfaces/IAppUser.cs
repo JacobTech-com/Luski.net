@@ -7,5 +7,7 @@ namespace Luski.net.Interfaces
         string Email { get; }
         IReadOnlyList<IRemoteUser> Friends { get; }
         IReadOnlyList<IRemoteUser> FriendRequests { get; }
+
+        IReadOnlyList<IChannel> Channels { get; }
     }
 }
