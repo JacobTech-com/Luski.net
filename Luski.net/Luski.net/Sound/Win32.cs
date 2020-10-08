@@ -3,39 +3,39 @@ using System.Runtime.InteropServices;
 
 namespace Luski.net.Sound
 {
-    public unsafe class Win32
+    internal unsafe class Win32
     {
-        public Win32()
+        internal Win32()
         {
 
         }
 
-        public const int WAVE_MAPPER = -1;
+        internal const int WAVE_MAPPER = -1;
 
-        public const int WT_EXECUTEDEFAULT = 0x00000000;
-        public const int WT_EXECUTEINIOTHREAD = 0x00000001;
-        public const int WT_EXECUTEINTIMERTHREAD = 0x00000020;
-        public const int WT_EXECUTEINPERSISTENTTHREAD = 0x00000080;
+        internal const int WT_EXECUTEDEFAULT = 0x00000000;
+        internal const int WT_EXECUTEINIOTHREAD = 0x00000001;
+        internal const int WT_EXECUTEINTIMERTHREAD = 0x00000020;
+        internal const int WT_EXECUTEINPERSISTENTTHREAD = 0x00000080;
 
-        public const int TIME_ONESHOT = 0;
-        public const int TIME_PERIODIC = 1;
+        internal const int TIME_ONESHOT = 0;
+        internal const int TIME_PERIODIC = 1;
 
         [StructLayout(LayoutKind.Sequential, Pack = 4, CharSet = CharSet.Auto)]
-        public struct WAVEOUTCAPS
+        internal struct WAVEOUTCAPS
         {
-            public short wMid;
-            public short wPid;
-            public int vDriverVersion;
+            internal short wMid;
+            internal short wPid;
+            internal int vDriverVersion;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
-            public string szPname;
-            public uint dwFormats;
-            public short wChannels;
-            public short wReserved;
-            public int dwSupport;
+            internal string szPname;
+            internal uint dwFormats;
+            internal short wChannels;
+            internal short wReserved;
+            internal int dwSupport;
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 4, CharSet = CharSet.Auto)]
-        public struct WAVEINCAPS
+        internal struct WAVEINCAPS
         {
             public short wMid;
             public short wPid;

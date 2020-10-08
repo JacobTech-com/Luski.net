@@ -9,14 +9,14 @@ namespace Luski.net.Sound
 
     }
 
-    public class WinSound
+    internal class WinSound
     {
-        public WinSound()
+        internal WinSound()
         {
 
         }
 
-        public static List<string> GetPlaybackNames()
+        internal static List<string> GetPlaybackNames()
         {
             List<string> list = new List<string>();
             Win32.WAVEOUTCAPS waveOutCap = new Win32.WAVEOUTCAPS();
@@ -34,7 +34,7 @@ namespace Luski.net.Sound
             return list;
         }
 
-        public static List<string> GetRecordingNames()
+        internal static List<string> GetRecordingNames()
         {
             List<string> list = new List<string>();
             Win32.WAVEINCAPS waveInCap = new Win32.WAVEINCAPS();
@@ -52,7 +52,7 @@ namespace Luski.net.Sound
             return list;
         }
 
-        public static int GetWaveInDeviceIdByName(string name)
+        internal static int GetWaveInDeviceIdByName(string name)
         {
             uint num = Win32.waveInGetNumDevs();
 
@@ -72,7 +72,7 @@ namespace Luski.net.Sound
             return Win32.WAVE_MAPPER;
         }
 
-        public static int GetWaveOutDeviceIdByName(string name)
+        internal static int GetWaveOutDeviceIdByName(string name)
         {
             uint num = Win32.waveOutGetNumDevs();
 
@@ -90,38 +90,6 @@ namespace Luski.net.Sound
             }
 
             return Win32.WAVE_MAPPER;
-        }
-
-        public static string FlagToString(Win32.WaveHdrFlags flag)
-        {
-            StringBuilder sb = new StringBuilder();
-
-            if ((flag & Win32.WaveHdrFlags.WHDR_PREPARED) > 0)
-            {
-                sb.Append("PREPARED ");
-            }
-
-            if ((flag & Win32.WaveHdrFlags.WHDR_BEGINLOOP) > 0)
-            {
-                sb.Append("BEGINLOOP ");
-            }
-
-            if ((flag & Win32.WaveHdrFlags.WHDR_ENDLOOP) > 0)
-            {
-                sb.Append("ENDLOOP ");
-            }
-
-            if ((flag & Win32.WaveHdrFlags.WHDR_INQUEUE) > 0)
-            {
-                sb.Append("INQUEUE ");
-            }
-
-            if ((flag & Win32.WaveHdrFlags.WHDR_DONE) > 0)
-            {
-                sb.Append("DONE ");
-            }
-
-            return sb.ToString();
         }
     }
 }

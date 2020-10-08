@@ -10,6 +10,7 @@ namespace Luski.net.Sockets
     {
         internal SocketAppUser(string Json) : base(Json)
         {
+            Server.ID = ID;
             dynamic json = JsonConvert.DeserializeObject<dynamic>(Json);
             JArray FriendReq = DataBinder.Eval(json, "Friend Requests");
             JArray Friend = DataBinder.Eval(json, "Friends");
@@ -17,6 +18,7 @@ namespace Luski.net.Sockets
             _Channels = new List<IChannel>();
             _Friends = new List<IRemoteUser>();
             _FriendRequests = new List<IRemoteUser>();
+            Server.Channels = _Channels;
             foreach (JToken user in Friend)
             {
                 _Friends.Add(new SocketRemoteUser(ulong.Parse(user["user_id"].ToString())));

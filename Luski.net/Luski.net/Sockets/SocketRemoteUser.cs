@@ -34,7 +34,7 @@ namespace Luski.net.Sockets
         {
             dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
             Channel = null;
-            if ((ulong)data.Id != Server._user.ID)
+            if ((ulong)data.Id != Server.ID)
             {
                 switch (((string)data["Friend Status"]).ToLower())
                 {
@@ -44,7 +44,7 @@ namespace Luski.net.Sockets
                     case "friends":
                         FriendStatus = FriendStatus.Friends;
                         
-                        foreach (IChannel chan in Server._user.Channels)
+                        foreach (IChannel chan in Server.Channels)
                         {
                             if (chan.Type == ChannelType.DM)
                             {

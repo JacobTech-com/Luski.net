@@ -3,6 +3,7 @@ using Luski.net.Sockets;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Net;
@@ -19,8 +20,26 @@ namespace Luski.net
         internal static string Token = null;
         internal static string Error = null;
         internal static bool CanRequest = false;
+        
+        internal static ulong ID;
         internal static SocketAppUser _user;
-        internal static string Domain = "JacobTech.com";
+        internal static string Domain = "localhost:44396";
+        private static IReadOnlyList<IChannel> _chan;
+        internal static IReadOnlyList<IChannel> Channels
+        {
+            get
+            {
+                if (_user == null)
+                {
+                    return _chan;
+                }
+                else
+                {
+                    return _user.Channels;
+                }
+            }
+            set => _chan = value;
+        }
 
         public class CreateAccount : Login
         {
