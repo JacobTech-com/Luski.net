@@ -3,33 +3,33 @@ using System.Linq;
 
 namespace Luski.net.Sound
 {
-    public class RTPPacket
+    internal class RTPPacket
     {
-        public RTPPacket()
+        internal RTPPacket()
         {
 
         }
 
-        public RTPPacket(byte[] data)
+        internal RTPPacket(byte[] data)
         {
             Parse(data);
         }
 
-        public static int MinHeaderLength = 12;
-        public int HeaderLength = MinHeaderLength;
-        public int Version = 0;
-        public bool Padding = false;
-        public bool Extension = false;
-        public int CSRCCount = 0;
-        public bool Marker = false;
-        public int PayloadType = 0;
-        public ushort SequenceNumber = 0;
-        public uint Timestamp = 0;
-        public uint SourceId = 0;
-        public byte[] Data;
-        public ushort ExtensionHeaderId = 0;
-        public ushort ExtensionLengthAsCount = 0;
-        public int ExtensionLengthInBytes = 0;
+        internal static int MinHeaderLength = 12;
+        internal int HeaderLength = MinHeaderLength;
+        internal int Version = 0;
+        internal bool Padding = false;
+        internal bool Extension = false;
+        internal int CSRCCount = 0;
+        internal bool Marker = false;
+        internal int PayloadType = 0;
+        internal ushort SequenceNumber = 0;
+        internal uint Timestamp = 0;
+        internal uint SourceId = 0;
+        internal byte[] Data;
+        internal ushort ExtensionHeaderId = 0;
+        internal ushort ExtensionLengthAsCount = 0;
+        internal int ExtensionLengthInBytes = 0;
 
         private void Parse(byte[] data)
         {
@@ -98,7 +98,7 @@ namespace Luski.net.Sound
             return Convert.ToInt32(result);
         }
 
-        public byte[] ToBytes()
+        internal byte[] ToBytes()
         {
             byte[] bytes = new byte[this.HeaderLength + Data.Length];
 

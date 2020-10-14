@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace Luski.net.Sound
 {
-    public class JitterBuffer
+    internal class JitterBuffer
     {
-        public JitterBuffer(object sender, uint maxRTPPackets, uint timerIntervalInMilliseconds)
+        internal JitterBuffer(object sender, uint maxRTPPackets, uint timerIntervalInMilliseconds)
         {
             if (maxRTPPackets < 2)
             {
@@ -26,12 +26,11 @@ namespace Luski.net.Sound
         private bool m_Underflow = true;
         private bool m_Overflow = false;
 
-        public delegate void DelegateDataAvailable(object sender, RTPPacket packet);
-        public event DelegateDataAvailable DataAvailable;
+        internal delegate void DelegateDataAvailable(object sender, RTPPacket packet);
+        internal event DelegateDataAvailable DataAvailable;
 
-        public int Length => m_Buffer.Count;
-        public uint Maximum { get; } = 10;
-        public uint IntervalInMilliseconds { get; } = 20;
+        internal uint Maximum { get; } = 10;
+        internal uint IntervalInMilliseconds { get; } = 20;
         private void Init()
         {
             InitTimer();
@@ -40,12 +39,12 @@ namespace Luski.net.Sound
         {
             m_Timer.TimerTick += new EventTimer.DelegateTimerTick(OnTimerTick);
         }
-        public void Start()
+        internal void Start()
         {
             m_Timer.Start(IntervalInMilliseconds, 0);
             m_Underflow = true;
         }
-        public void Stop()
+        internal void Stop()
         {
             m_Timer.Stop();
             m_Buffer.Clear();
@@ -100,7 +99,7 @@ namespace Luski.net.Sound
                 Console.WriteLine(string.Format("JitterBuffer.cs | OnTimerTick() | {0}", ex.Message));
             }
         }
-        public void AddData(RTPPacket packet)
+        internal void AddData(RTPPacket packet)
         {
             try
             {

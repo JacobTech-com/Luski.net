@@ -1,77 +1,23 @@
-﻿using System;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Text;
 
 namespace Luski.net.Sound
 {
-    public class WaveFile
+    internal class WaveFile
     {
-        public WaveFile()
+        internal WaveFile()
         {
 
         }
 
-        public const int WAVE_FORMAT_PCM = 1;
+        internal const int WAVE_FORMAT_PCM = 1;
 
-        public static void Create(string fileName, uint samplesPerSecond, short bitsPerSample, short channels, byte[] data)
-        {
-            if (File.Exists(fileName))
-            {
-                File.Delete(fileName);
-            }
 
-            WaveFileHeader header = CreateNewWaveFileHeader(samplesPerSecond, bitsPerSample, channels, (uint)data.Length, 44 + data.Length);
-            WriteHeader(fileName, header);
-            WriteData(fileName, header.DATAPos, data);
-        }
-
-        public static void AppendData(string fileName, byte[] data)
-        {
-            AppendData(fileName, data, false);
-        }
-
-        public static void AppendData(string fileName, byte[] data, bool forceWriting)
-        {
-            WaveFileHeader header = ReadHeader(fileName);
-
-            if (header.DATASize > 0 || forceWriting)
-            {
-                WriteData(fileName, (int)(header.DATAPos + header.DATASize), data);
-
-                header.DATASize += (uint)data.Length;
-                header.RiffSize += (uint)data.Length;
-
-                WriteHeader(fileName, header);
-            }
-        }
-
-        public static WaveFileHeader Read(string fileName)
+        internal static WaveFileHeader Read(string fileName)
         {
             WaveFileHeader header = ReadHeader(fileName);
 
             return header;
-        }
-
-        private static WaveFileHeader CreateNewWaveFileHeader(uint SamplesPerSecond, short BitsPerSample, short Channels, uint dataSize, long fileSize)
-        {
-            WaveFileHeader Header = new WaveFileHeader();
-
-            Array.Copy("RIFF".ToArray<Char>(), Header.RIFF, 4);
-            Header.RiffSize = (uint)(fileSize - 8);
-            Array.Copy("WAVE".ToArray<Char>(), Header.RiffFormat, 4);
-            Array.Copy("fmt ".ToArray<Char>(), Header.FMT, 4);
-            Header.FMTSize = 16;
-            Header.AudioFormat = WAVE_FORMAT_PCM;
-            Header.Channels = Channels;
-            Header.SamplesPerSecond = SamplesPerSecond;
-            Header.BitsPerSample = BitsPerSample;
-            Header.BlockAlign = (short)((BitsPerSample * Channels) >> 3);
-            Header.BytesPerSecond = (uint)(Header.BlockAlign * Header.SamplesPerSecond);
-            Array.Copy("data".ToArray<Char>(), Header.DATA, 4);
-            Header.DATASize = dataSize;
-
-            return Header;
         }
 
         private static WaveFileHeader ReadHeader(string fileName)
@@ -124,118 +70,34 @@ namespace Luski.net.Sound
 
             return header;
         }
-
-        public static void WriteHeader(string fileName, WaveFileHeader header)
-        {
-            FileStream fs = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.ReadWrite);
-            BinaryWriter wr = new BinaryWriter(fs, Encoding.UTF8);
-
-            wr.Write(header.RIFF);
-            wr.Write(Int32ToBytes((int)header.RiffSize));
-            wr.Write(header.RiffFormat);
-
-            wr.Write(header.FMT);
-            wr.Write(Int32ToBytes((int)header.FMTSize));
-            wr.Write(Int16ToBytes(header.AudioFormat));
-            wr.Write(Int16ToBytes(header.Channels));
-            wr.Write(Int32ToBytes((int)header.SamplesPerSecond));
-            wr.Write(Int32ToBytes((int)header.BytesPerSecond));
-            wr.Write(Int16ToBytes(header.BlockAlign));
-            wr.Write(Int16ToBytes(header.BitsPerSample));
-
-            wr.Write(header.DATA);
-            wr.Write(Int32ToBytes((int)header.DATASize));
-
-            wr.Close();
-            fs.Close();
-        }
-
-        public static void WriteData(string fileName, int pos, byte[] data)
-        {
-            FileStream fs = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.ReadWrite);
-            BinaryWriter wr = new BinaryWriter(fs, Encoding.UTF8);
-
-            wr.Seek(pos, SeekOrigin.Begin);
-            wr.Write(data);
-            wr.Close();
-            fs.Close();
-        }
-
-        private static int BytesToInt32(ref byte[] bytes)
-        {
-            int Int32 = 0;
-            Int32 = (Int32 << 8) + bytes[3];
-            Int32 = (Int32 << 8) + bytes[2];
-            Int32 = (Int32 << 8) + bytes[1];
-            Int32 = (Int32 << 8) + bytes[0];
-            return Int32;
-        }
-
-        private static short BytesToInt16(ref byte[] bytes)
-        {
-            short Int16 = 0;
-            Int16 = (short)((Int16 << 8) + bytes[1]);
-            Int16 = (short)((Int16 << 8) + bytes[0]);
-            return Int16;
-        }
-
-        private static byte[] Int32ToBytes(int value)
-        {
-            byte[] bytes = new byte[4];
-            bytes[0] = (byte)(value & 0xFF);
-            bytes[1] = (byte)(value >> 8 & 0xFF);
-            bytes[2] = (byte)(value >> 16 & 0xFF);
-            bytes[3] = (byte)(value >> 24 & 0xFF);
-            return bytes;
-        }
-
-        private static byte[] Int16ToBytes(short value)
-        {
-            byte[] bytes = new byte[2];
-            bytes[0] = (byte)(value & 0xFF);
-            bytes[1] = (byte)(value >> 8 & 0xFF);
-            return bytes;
-        }
     }
 
-    public class WaveFileHeader
+    internal class WaveFileHeader
     {
-        public WaveFileHeader()
+        internal WaveFileHeader()
         {
 
         }
 
-        public char[] RIFF = new char[4];
-        public uint RiffSize = 8;
-        public char[] RiffFormat = new char[4];
+        internal char[] RIFF = new char[4];
+        internal uint RiffSize = 8;
+        internal char[] RiffFormat = new char[4];
 
-        public char[] FMT = new char[4];
-        public uint FMTSize = 16;
-        public short AudioFormat;
-        public short Channels;
-        public uint SamplesPerSecond;
-        public uint BytesPerSecond;
-        public short BlockAlign;
-        public short BitsPerSample;
+        internal char[] FMT = new char[4];
+        internal uint FMTSize = 16;
+        internal short AudioFormat;
+        internal short Channels;
+        internal uint SamplesPerSecond;
+        internal uint BytesPerSecond;
+        internal short BlockAlign;
+        internal short BitsPerSample;
 
-        public char[] DATA = new char[4];
-        public uint DATASize;
+        internal char[] DATA = new char[4];
+        internal uint DATASize;
 
-        public byte[] Payload = new byte[0];
+        internal byte[] Payload = new byte[0];
 
-        public int DATAPos = 44;
-        public long FMTPos = 20;
-
-        public TimeSpan Duration
-        {
-            get
-            {
-                int blockAlign = ((BitsPerSample * Channels) >> 3);
-                int bytesPerSec = (int)(blockAlign * SamplesPerSecond);
-                double value = Payload.Length / (double)bytesPerSec;
-
-                return new TimeSpan(0, 0, (int)value);
-            }
-        }
+        internal int DATAPos = 44;
+        internal long FMTPos = 20;
     }
 }

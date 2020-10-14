@@ -5,31 +5,31 @@ using System.Text;
 
 namespace Luski.net.Sound
 {
-    public enum ProtocolTypes
+    internal enum ProtocolTypes
     {
         LH
     }
 
-    public class Protocol
+    internal class Protocol
     {
-        public Protocol(ProtocolTypes type, Encoding encoding)
+        internal Protocol(ProtocolTypes type, Encoding encoding)
         {
-            this.m_ProtocolType = type;
-            this.m_Encoding = encoding;
+            m_ProtocolType = type;
+            m_Encoding = encoding;
         }
 
         private readonly List<byte> m_DataBuffer = new List<byte>();
         private const int m_MaxBufferLength = 10000;
         private readonly ProtocolTypes m_ProtocolType = ProtocolTypes.LH;
         private readonly Encoding m_Encoding = Encoding.Default;
-        public object m_LockerReceive = new object();
+        internal object m_LockerReceive = new object();
 
-        public delegate void DelegateDataComplete(object sender, byte[] data);
-        public delegate void DelegateExceptionAppeared(object sender, Exception ex);
-        public event DelegateDataComplete DataComplete;
-        public event DelegateExceptionAppeared ExceptionAppeared;
+        internal delegate void DelegateDataComplete(object sender, byte[] data);
+        internal delegate void DelegateExceptionAppeared(object sender, Exception ex);
+        internal event DelegateDataComplete DataComplete;
+        internal event DelegateExceptionAppeared ExceptionAppeared;
 
-        public byte[] ToBytes(byte[] data)
+        internal byte[] ToBytes(byte[] data)
         {
             try
             {
@@ -49,7 +49,7 @@ namespace Luski.net.Sound
             return data;
         }
 
-        public void Receive_LH(object sender, byte[] data)
+        internal void Receive_LH(object sender, byte[] data)
         {
             lock (m_LockerReceive)
             {

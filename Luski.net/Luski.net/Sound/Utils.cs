@@ -1,26 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Luski.net.Sound
 {
-    public class Utils
+    internal class Utils
     {
-        public Utils()
+        internal Utils()
         {
 
         }
 
         private const int SIGN_BIT = 0x80;
         private const int QUANT_MASK = 0xf;
-        private const int NSEGS = (8);
         private const int SEG_SHIFT = 4;
         private const int SEG_MASK = 0x70;
         private const int BIAS = 0x84;
         private const int CLIP = 8159;
         private static readonly short[] seg_uend = new short[] { 0x3F, 0x7F, 0xFF, 0x1FF, 0x3FF, 0x7FF, 0xFFF, 0x1FFF };
 
-        public static int GetBytesPerInterval(uint SamplesPerSecond, int BitsPerSample, int Channels)
+        internal static int GetBytesPerInterval(uint SamplesPerSecond, int BitsPerSample, int Channels)
         {
             int blockAlign = ((BitsPerSample * Channels) >> 3);
             int bytesPerSec = (int)(blockAlign * SamplesPerSecond);
@@ -30,7 +27,7 @@ namespace Luski.net.Sound
             return bytesPerInterval;
         }
 
-        public static int MulawToLinear(int ulaw)
+        internal static int MulawToLinear(int ulaw)
         {
             ulaw = ~ulaw;
             int t = ((ulaw & QUANT_MASK) << 3) + BIAS;
@@ -53,7 +50,7 @@ namespace Luski.net.Sound
             return (size);
         }
 
-        public static byte Linear2ulaw(short pcm_val)
+        internal static byte Linear2ulaw(short pcm_val)
         {
 
             /* Get the sign and the magnitude of the value. */
@@ -94,7 +91,7 @@ namespace Luski.net.Sound
             }
         }
 
-        public static byte[] MuLawToLinear(byte[] bytes, int bitsPerSample, int channels)
+        internal static byte[] MuLawToLinear(byte[] bytes, int bitsPerSample, int channels)
         {
             int blockAlign = channels * bitsPerSample / 8;
 
@@ -146,55 +143,7 @@ namespace Luski.net.Sound
             return result;
         }
 
-        public static int[] MuLawToLinear32(byte[] bytes, int bitsPerSample, int channels)
-        {
-            int blockAlign = channels;
-
-            int[] result = new int[bytes.Length * blockAlign];
-            for (int i = 0, counter = 0; i < bytes.Length; i++, counter += blockAlign)
-            {
-                int value = MulawToLinear(bytes[i]);
-
-                switch (bitsPerSample)
-                {
-                    case 8:
-                        switch (channels)
-                        {
-                            //8 Bit 1 Channel
-                            case 1:
-                                result[counter] = value;
-                                break;
-
-                            //8 Bit 2 Channel
-                            case 2:
-                                result[counter] = value;
-                                result[counter + 1] = value;
-                                break;
-                        }
-                        break;
-
-                    case 16:
-                        switch (channels)
-                        {
-                            //16 Bit 1 Channel
-                            case 1:
-                                result[counter] = value;
-                                break;
-
-                            //16 Bit 2 Channels
-                            case 2:
-                                result[counter] = value;
-                                result[counter + 1] = value;
-                                break;
-                        }
-                        break;
-                }
-            }
-
-            return result;
-        }
-
-        public static byte[] LinearToMulaw(byte[] bytes, int bitsPerSample, int channels)
+        internal static byte[] LinearToMulaw(byte[] bytes, int bitsPerSample, int channels)
         {
             int blockAlign = channels * bitsPerSample / 8;
 
@@ -241,21 +190,6 @@ namespace Luski.net.Sound
             }
 
             return result;
-        }
-
-        public static double GetStandardDerivation(System.Collections.Generic.List<double> list)
-        {
-            List<double> listCopy = new List<double>(list);
-            double average = listCopy.Average();
-
-            double sum = 0;
-            foreach (double value in listCopy)
-            {
-                double diff = average - value;
-                sum += Math.Pow(diff, 2);
-            }
-
-            return Math.Sqrt(sum / (listCopy.Count - 1));
         }
     }
 }

@@ -3,9 +3,9 @@ using System.Runtime.InteropServices;
 
 namespace Luski.net.Sound
 {
-    public unsafe class Player
+    internal unsafe class Player
     {
-        public Player()
+        internal Player()
         {
 
             delegateWaveOutProc = new Win32.DelegateWaveOutProc(WaveOutProc);
@@ -31,15 +31,13 @@ namespace Luski.net.Sound
         private System.Threading.Thread ThreadPlayWaveOut;
         private readonly System.Threading.AutoResetEvent AutoResetEventDataPlayed = new System.Threading.AutoResetEvent(false);
 
-        public delegate void DelegateStopped();
-        public event DelegateStopped PlayerClosed;
-        public event DelegateStopped PlayerStopped;
+        internal delegate void DelegateStopped();
+        internal event DelegateStopped PlayerClosed;
+        internal event DelegateStopped PlayerStopped;
 
-        public bool Paused => IsPaused;
+        internal bool Opened => IsWaveOutOpened & IsClosed == false;
 
-        public bool Opened => IsWaveOutOpened & IsClosed == false;
-
-        public bool Playing
+        internal bool Playing
         {
             get
             {
@@ -131,65 +129,6 @@ namespace Luski.net.Sound
             }
         }
 
-        private bool PlayBytes(byte[] bytes)
-        {
-            if (bytes.Length > 0)
-            {
-                int byteSize = bytes.Length / BufferCount;
-                int currentPos = 0;
-
-                for (int count = 0; count < BufferCount; count++)
-                {
-                    int index = GetNextFreeWaveOutHeaderIndex();
-                    if (index != -1)
-                    {
-                        try
-                        {
-                            byte[] partByte = new byte[byteSize];
-                            Array.Copy(bytes, currentPos, partByte, 0, byteSize);
-                            currentPos += byteSize;
-
-                            if (WaveOutHeaders[index]->dwBufferLength != partByte.Length)
-                            {
-                                Marshal.FreeHGlobal(WaveOutHeaders[index]->lpData);
-                                WaveOutHeaders[index]->lpData = Marshal.AllocHGlobal(partByte.Length);
-                                WaveOutHeaders[index]->dwBufferLength = (uint)partByte.Length;
-                            }
-
-                            WaveOutHeaders[index]->dwUser = (IntPtr)index;
-                            Marshal.Copy(partByte, 0, WaveOutHeaders[index]->lpData, partByte.Length);
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine(string.Format("CopyBytesToFreeWaveOutHeaders() | {0}", ex.Message));
-                            AutoResetEventDataPlayed.Set();
-                            return false;
-                        }
-
-                        if (hWaveOut != null)
-                        {
-                            Win32.MMRESULT hr = Win32.waveOutWrite(hWaveOut, WaveOutHeaders[index], sizeof(Win32.WAVEHDR));
-                            if (hr != Win32.MMRESULT.MMSYSERR_NOERROR)
-                            {
-                                AutoResetEventDataPlayed.Set();
-                                return false;
-                            }
-                        }
-                        else
-                        {
-                            return false;
-                        }
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
-                return true;
-            }
-            return false;
-        }
-
         private bool OpenWaveOut()
         {
             if (hWaveOut == IntPtr.Zero)
@@ -223,7 +162,7 @@ namespace Luski.net.Sound
             return true;
         }
 
-        public bool Open(string waveOutDeviceName, int samplesPerSecond, int bitsPerSample, int channels, int bufferCount)
+        internal bool Open(string waveOutDeviceName, int samplesPerSecond, int bitsPerSample, int channels, int bufferCount)
         {
             try
             {
@@ -259,7 +198,7 @@ namespace Luski.net.Sound
             }
         }
 
-        public bool PlayData(byte[] datas, bool isBlocking)
+        internal bool PlayData(byte[] datas, bool isBlocking)
         {
             try
             {
@@ -268,7 +207,7 @@ namespace Luski.net.Sound
                     int index = GetNextFreeWaveOutHeaderIndex();
                     if (index != -1)
                     {
-                        this.IsBlocking = isBlocking;
+                        IsBlocking = isBlocking;
 
                         if (WaveOutHeaders[index]->dwBufferLength != datas.Length)
                         {
@@ -281,7 +220,7 @@ namespace Luski.net.Sound
                         WaveOutHeaders[index]->dwUser = (IntPtr)index;
                         Marshal.Copy(datas, 0, WaveOutHeaders[index]->lpData, datas.Length);
 
-                        this.IsStarted = true;
+                        IsStarted = true;
                         Win32.MMRESULT hr = Win32.waveOutWrite(hWaveOut, WaveOutHeaders[index], sizeof(Win32.WAVEHDR));
                         if (hr == Win32.MMRESULT.MMSYSERR_NOERROR)
                         {
@@ -317,52 +256,7 @@ namespace Luski.net.Sound
             }
         }
 
-        public bool PlayFile(string fileName, string waveOutDeviceName)
-        {
-            lock (Locker)
-            {
-                try
-                {
-                    WaveFileHeader header = WaveFile.Read(fileName);
-
-                    if (header.Payload.Length > 0)
-                    {
-                        if (Open(waveOutDeviceName, (int)header.SamplesPerSecond, header.BitsPerSample, header.Channels, 8))
-                        {
-                            int index = GetNextFreeWaveOutHeaderIndex();
-                            if (index != -1)
-                            {
-                                this.IsStarted = true;
-                                return PlayBytes(header.Payload);
-                            }
-                            else
-                            {
-                                AutoResetEventDataPlayed.Set();
-                                return false;
-                            }
-                        }
-                        else
-                        {
-                            AutoResetEventDataPlayed.Set();
-                            return false;
-                        }
-                    }
-                    else
-                    {
-                        AutoResetEventDataPlayed.Set();
-                        return false;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine(string.Format("PlayFile | {0}", ex.Message));
-                    AutoResetEventDataPlayed.Set();
-                    return false;
-                }
-            }
-        }
-
-        public bool Close()
+        internal bool Close()
         {
             try
             {
@@ -402,63 +296,6 @@ namespace Luski.net.Sound
             }
         }
 
-        public bool StartPause()
-        {
-            try
-            {
-                lock (Locker)
-                {
-                    if (Opened)
-                    {
-                        if (IsPaused == false)
-                        {
-                            Win32.MMRESULT hr = Win32.waveOutPause(hWaveOut);
-                            if (hr == Win32.MMRESULT.MMSYSERR_NOERROR)
-                            {
-                                IsPaused = true;
-                                AutoResetEventDataPlayed.Set();
-                                return true;
-                            }
-                        }
-                    }
-                    return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine(string.Format("StartPause | {0}", ex.Message));
-                return false;
-            }
-        }
-
-        public bool EndPause()
-        {
-            try
-            {
-                lock (Locker)
-                {
-                    if (Opened)
-                    {
-                        if (IsPaused)
-                        {
-                            Win32.MMRESULT hr = Win32.waveOutRestart(hWaveOut);
-                            if (hr == Win32.MMRESULT.MMSYSERR_NOERROR)
-                            {
-                                IsPaused = false;
-                                AutoResetEventDataPlayed.Set();
-                                return true;
-                            }
-                        }
-                    }
-                    return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine(string.Format("EndPause | {0}", ex.Message));
-                return false;
-            }
-        }
 
         private int GetNextFreeWaveOutHeaderIndex()
         {
@@ -505,7 +342,7 @@ namespace Luski.net.Sound
                         IsPaused = false;
                         IsClosed = true;
                         AutoResetEventDataPlayed.Set();
-                        this.hWaveOut = IntPtr.Zero;
+                        hWaveOut = IntPtr.Zero;
                         break;
                 }
             }

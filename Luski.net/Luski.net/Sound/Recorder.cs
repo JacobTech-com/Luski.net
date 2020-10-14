@@ -3,9 +3,9 @@ using System.Runtime.InteropServices;
 
 namespace Luski.net.Sound
 {
-    public unsafe class Recorder
+    internal unsafe class Recorder
     {
-        public Recorder()
+        internal Recorder()
         {
             delegateWaveInProc = new Win32.DelegateWaveInProc(WaveInProc);
         }
@@ -30,12 +30,12 @@ namespace Luski.net.Sound
         private System.Threading.Thread ThreadRecording;
         private readonly System.Threading.AutoResetEvent AutoResetEventDataRecorded = new System.Threading.AutoResetEvent(false);
 
-        public delegate void DelegateStopped();
-        public delegate void DelegateDataRecorded(byte[] bytes);
-        public event DelegateStopped RecordingStopped;
-        public event DelegateDataRecorded DataRecorded;
+        internal delegate void DelegateStopped();
+        internal delegate void DelegateDataRecorded(byte[] bytes);
+        internal event DelegateStopped RecordingStopped;
+        internal event DelegateDataRecorded DataRecorded;
 
-        public bool Started => IsWaveInStarted && IsWaveInOpened && IsThreadRecordingRunning;
+        internal bool Started => IsWaveInStarted && IsWaveInOpened && IsThreadRecordingRunning;
 
         private bool CreateWaveInHeaders()
         {
@@ -148,7 +148,7 @@ namespace Luski.net.Sound
             return true;
         }
 
-        public bool Start(string waveInDeviceName, int samplesPerSecond, int bitsPerSample, int channels, int bufferCount, int bufferSize)
+        internal bool Start(string waveInDeviceName, int samplesPerSecond, int bitsPerSample, int channels, int bufferCount, int bufferSize)
         {
             try
             {
@@ -193,7 +193,7 @@ namespace Luski.net.Sound
             }
         }
 
-        public bool Stop()
+        internal bool Stop()
         {
             try
             {
