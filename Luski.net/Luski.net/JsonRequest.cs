@@ -8,8 +8,8 @@ namespace Luski.net
         {
             JObject @out = new JObject
             {
-                { "Data", Data },
-                { "Id", to }
+                { "data", Data },
+                { "id", to }
             };
             return @out;
         }
@@ -18,8 +18,8 @@ namespace Luski.net
         {
             JObject @out = new JObject
             {
-                { "Type", "DM" },
-                { "Id", Channel }
+                { "type", "dm" },
+                { "id", Channel }
             };
             return @out;
         }
@@ -28,8 +28,8 @@ namespace Luski.net
         {
             JObject @out = new JObject
             {
-                { "Type", Request },
-                { "Data", Data }
+                { "type", Request },
+                { "data", Data }
             };
             return @out;
         }
@@ -38,8 +38,8 @@ namespace Luski.net
         {
             JObject @out = new JObject
             {
-                { "Channel_Id", Channel },
-                { "Content", Message }
+                { "channel_id", Channel },
+                { "content", Message }
             };
             return @out;
         }
@@ -48,7 +48,7 @@ namespace Luski.net
         {
             JObject @out = new JObject
             {
-                { "Id", Channel }
+                { "id", Channel }
             };
             return @out;
         }
@@ -76,7 +76,7 @@ namespace Luski.net
             }
             JObject @out = new JObject
             {
-                { "Status", stat }
+                { "status", stat }
             };
             return @out;
         }
@@ -85,8 +85,8 @@ namespace Luski.net
         {
             JObject @out = new JObject
             {
-                { "Id", User },
-                { "Result", Result }
+                { "id", User },
+                { "result", Result }
             };
             return @out;
         }
@@ -95,7 +95,30 @@ namespace Luski.net
         {
             JObject @out = new JObject
             {
-                { "Id", User }
+                { "type", "id" },
+                { "id", User }
+            };
+            return @out;
+        }
+
+        internal static JObject FriendRequest(string Username, short tag)
+        {
+            JObject @out = new JObject
+            {
+                { "type", "tag" },
+                { "username", Username },
+                { "tag", tag }
+            };
+            return @out;
+        }
+
+        internal static JObject FriendRequest(string Username, string tag)
+        {
+            JObject @out = new JObject
+            {
+                { "type", "tag" },
+                { "username", Username },
+                { "tag", tag }
             };
             return @out;
         }

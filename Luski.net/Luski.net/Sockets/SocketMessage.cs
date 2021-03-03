@@ -1,6 +1,7 @@
 ﻿using Luski.net.Interfaces;
 using Newtonsoft.Json;
 using System;
+using System.Linq;
 using System.Net;
 
 namespace Luski.net.Sockets
@@ -10,10 +11,10 @@ namespace Luski.net.Sockets
         internal SocketMessage(string json)
         {
             dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
-            ChannelId = (ulong)data.Channel_Id;
-            AuthorId = (ulong)data.User_Id;
-            Context = (string)data.Content;
-            Id = (ulong)data.Id;
+            ChannelId = (ulong)data.channel_id;
+            AuthorId = (ulong)data.user_id;
+            Context = (string)data.content;
+            Id = (ulong)data.id;
         }
 
         internal SocketMessage(ulong ID, ulong Channel)
@@ -28,7 +29,7 @@ namespace Luski.net.Sockets
                         web.Headers.Add("Token", Server.Token);
                         web.Headers.Add("MSG_Id", ID.ToString());
                         web.Headers.Add("Channel_Id", Channel.ToString());
-                        json = web.DownloadString($"https://{Server.Domain}/Luski/api/socketmessage");
+                        json = web.DownloadString($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/socketmessage");
                     }
                     break;
                 }
@@ -37,10 +38,10 @@ namespace Luski.net.Sockets
             string error = (string)data.error;
             if (string.IsNullOrEmpty(error))
             {
-                ChannelId = (ulong)data.Channel_User_Id;
-                AuthorId = (ulong)data.User_Id;
-                Context = (string)data.Content;
-                Id = (ulong)data.Id;
+                ChannelId = (ulong)data.channel_id;
+                AuthorId = (ulong)data.user_id;
+                Context = (string)data.content;
+                Id = (ulong)data.id;
             }
             else
             {
@@ -55,11 +56,30 @@ namespace Luski.net.Sockets
 
         public IChannel GetChannel()
         {
-            return new SocketChannel(ChannelId);
+            if (Server.chans.Any(s => s.Id == ChannelId))
+            {
+                return Server.chans.Where(s => s.Id == ChannelId).First();
+            }
+            else
+            {
+                SocketChannel ch = new SocketChannel(ChannelId);
+                Server.chans.Add(ch);
+                return ch;
+            }
         }
+
         public IUser GetAuthor()
         {
-            return new SocketUserBase(IdToJson(AuthorId));
+            if (Server.poeople.Any(s => s.ID == AuthorId))
+            {
+                return Server.poeople.Where(s => s.ID == AuthorId).First();
+            }
+            else
+            {
+                SocketUserBase usr = new SocketUserBase(IdToJson(AuthorId));
+                Server.poeople.Add(usr);
+                return usr;
+            }
         }
 
         private static string IdToJson(ulong id)
@@ -73,7 +93,7 @@ namespace Luski.net.Sockets
                     {
                         web.Headers.Add("Token", Server.Token);
                         web.Headers.Add("Id", id.ToString());
-                        data = web.DownloadString($"https://{Server.Domain}/Luski/api/socketuser");
+                        data = web.DownloadString($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/socketuser");
                     }
                     break;
                 }

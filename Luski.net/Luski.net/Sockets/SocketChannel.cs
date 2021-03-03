@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Web.UI;
 
@@ -16,10 +17,10 @@ namespace Luski.net.Sockets
             string error = (string)data.error;
             if (string.IsNullOrEmpty(error))
             {
-                Id = (ulong)data.Id;
-                Title = (string)data.Title;
-                Description = (string)data.Description;
-                switch (((string)data.Type).ToLower())
+                Id = (ulong)data.id;
+                Title = (string)data.title;
+                Description = (string)data.description;
+                switch (((string)data.type).ToLower())
                 {
                     case "dm":
                         Type = ChannelType.DM;
@@ -29,11 +30,22 @@ namespace Luski.net.Sockets
                         break;
                 }
                 _members = new List<IUser>();
-                JArray mem = DataBinder.Eval(data, "Members");
+                JArray mem = DataBinder.Eval(data, "members");
                 foreach (JToken person in mem)
                 {
                     ulong per = ulong.Parse(person.ToString());
-                    _members.Add(new SocketUserBase(IdToJson(per)));
+                    if (Server._user.Friends.Any(s => s.ID == per))
+                    {
+                        _members.Add(Server._user.Friends.Where(s => s.ID == per).First());
+                    }
+                    else if (Server._user.FriendRequests.Any(s => s.ID == per))
+                    {
+                        _members.Add(Server._user.FriendRequests.Where(s => s.ID == per).First());
+                    }
+                    else
+                    {
+                        _members.Add(new SocketUserBase(IdToJson(per)));
+                    }
                 }
             }
             else
@@ -53,7 +65,7 @@ namespace Luski.net.Sockets
                     {
                         web.Headers.Add("Token", Server.Token);
                         web.Headers.Add("Id", id.ToString());
-                        data = web.DownloadString($"https://{Server.Domain}/Luski/api/socketuser");
+                        data = web.DownloadString($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/socketuser");
                     }
                     break;
                 }
@@ -72,7 +84,7 @@ namespace Luski.net.Sockets
                     {
                         web.Headers.Add("Token", Server.Token);
                         web.Headers.Add("Id", id.ToString());
-                        json = web.DownloadString($"https://{Server.Domain}/Luski/api/SocketChannel");
+                        json = web.DownloadString($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/SocketChannel");
                     }
                     break;
                 }
@@ -81,23 +93,26 @@ namespace Luski.net.Sockets
             string error = (string)data.error;
             if (string.IsNullOrEmpty(error))
             {
-                Id = (ulong)data.Id;
-                Title = (string)data.Title;
-                Description = (string)data.Description;
-                switch (((string)data.Type).ToLower())
+                Id = (ulong)data.id;
+                Title = (string)data.title;
+                Description = (string)data.description;
+                if (Id != 0)
+                {
+                    _members = new List<IUser>();
+                    JArray mem = DataBinder.Eval(data, "members");
+                    foreach (JToken person in mem)
+                    {
+                        ulong per = ulong.Parse(person.ToString());
+                        _members.Add(new SocketUserBase(IdToJson(per)));
+                    }
+                }
+                switch (((string)data.type).ToLower())
                 {
                     case "dm":
                         Type = ChannelType.DM;
                         break;
                     case "group":
                         Type = ChannelType.GROUP;
-                        _members = new List<IUser>();
-                        JArray mem = DataBinder.Eval(data, "Members");
-                        foreach (JToken person in mem)
-                        {
-                            ulong per = ulong.Parse(person.ToString());
-                            _members.Add(new SocketUserBase(IdToJson(per)));
-                        }
                         break;
                 }
             }
@@ -142,17 +157,17 @@ namespace Luski.net.Sockets
                 using (WebClient web = new WebClient())
                 {
                     web.Headers.Add("Token", Server.Token);
-                    web.Headers.Add("User_Id", Id.ToString());
+                    web.Headers.Add("Channel_Id", Id.ToString());
                     web.Headers.Add("Messages", count.ToString());
                     web.Headers.Add("MostRecentID", MRID.ToString());
-                    json = web.DownloadString($"https://{Server.Domain}/Luski/api/SocketBulkMessage");
+                    json = web.DownloadString($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/SocketBulkMessage");
                 }
                 dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
                 string error = (string)data.error;
                 if (string.IsNullOrEmpty(error))
                 {
                     List<SocketMessage> messages = new List<SocketMessage>();
-                    JArray msgs = DataBinder.Eval(data, "Messages");
+                    JArray msgs = DataBinder.Eval(data, "messages");
                     foreach (JToken msg in msgs)
                     {
                         messages.Add(new SocketMessage(msg.ToString()));
@@ -182,16 +197,16 @@ namespace Luski.net.Sockets
                 using (WebClient web = new WebClient())
                 {
                     web.Headers.Add("Token", Server.Token);
-                    web.Headers.Add("User_Id", Id.ToString());
+                    web.Headers.Add("Channel_Id", Id.ToString());
                     web.Headers.Add("Messages", count.ToString());
-                    json = web.DownloadString($"https://{Server.Domain}/Luski/api/SocketBulkMessage");
+                    json = web.DownloadString($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/SocketBulkMessage");
                 }
                 dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
                 string error = (string)data.error;
                 if (string.IsNullOrEmpty(error))
                 {
                     List<SocketMessage> messages = new List<SocketMessage>();
-                    JArray msgs = DataBinder.Eval(data, "Messages");
+                    JArray msgs = DataBinder.Eval(data, "messages");
                     foreach (JToken msg in msgs)
                     {
                         messages.Add(new SocketMessage(msg.ToString()));
@@ -209,9 +224,9 @@ namespace Luski.net.Sockets
         {
             JObject @out = new JObject
             {
-                { "Id", Id },
-                { "Title", Title },
-                { "Description", Description }
+                { "id", Id },
+                { "title", Title },
+                { "description", Description }
             };
             return @out.ToString();
         }

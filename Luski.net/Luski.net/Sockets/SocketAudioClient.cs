@@ -123,7 +123,7 @@ namespace Luski.net.Sockets
         private async Task SocketAudioClient_DataRecived(JObject arg)
         {
             dynamic d = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(arg.ToString());
-            byte[] data = (byte[])d.Data;
+            byte[] data = (byte[])d.data;
             PrototolClient.Receive_LH(this, data);
         }
 
@@ -142,8 +142,8 @@ namespace Luski.net.Sockets
         {
             JObject @out = new JObject
             {
-                { "From", (ulong)data.Data.From },
-                { "Data", (string)data.Data.Data }
+                { "from", (ulong)data.data.from },
+                { "data", (string)data.data.data }
             };
             DataRecived.Invoke(@out);
         }

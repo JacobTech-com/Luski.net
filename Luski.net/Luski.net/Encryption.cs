@@ -25,7 +25,7 @@ namespace Luski.net
             {
                 using (WebClient web = new WebClient())
                 {
-                    rsa.FromXmlString(web.DownloadString($"https://{Server.Domain}/Luski/PublicKey"));
+                    rsa.FromXmlString(web.DownloadString($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/PublicKey"));
                     byte[] dataToEncrypt = Encoder.GetBytes(data);
                     byte[] encryptedByteArray = rsa.Encrypt(dataToEncrypt, false).ToArray();
                     int length = encryptedByteArray.Count();

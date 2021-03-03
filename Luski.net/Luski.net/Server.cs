@@ -15,31 +15,28 @@ namespace Luski.net
 {
     public class Server
     {
-        internal static WebSocket ServerOut;
         internal static SocketAudioClient AudioClient = null;
         internal static string Token = null;
         internal static string Error = null;
         internal static bool CanRequest = false;
-        
         internal static ulong ID;
+        internal static WebSocket ServerOut;
         internal static SocketAppUser _user;
-        internal static string Domain = "localhost:44396";
-        private static IReadOnlyList<IChannel> _chan;
-        internal static IReadOnlyList<IChannel> Channels
+        internal static string Domain = "www.JacobTech.com";
+        internal static string cache
         {
             get
             {
-                if (_user == null)
-                {
-                    return _chan;
-                }
-                else
-                {
-                    return _user.Channels;
-                }
+                if (!Directory.Exists("Luski cache")) Directory.CreateDirectory("Luski cache");
+                if (!Directory.Exists("Luski cache/avatars")) Directory.CreateDirectory("Luski cache/avatars");
+                return "Luski cache";
             }
-            set => _chan = value;
         }
+        internal static readonly string API_Ver = "v1";
+
+        internal static List<SocketUserBase> poeople = new List<SocketUserBase>();
+        internal static List<SocketChannel> chans = new List<SocketChannel>();
+
 
         public class CreateAccount : Login
         {
@@ -65,34 +62,27 @@ namespace Luski.net
             {
                 Encryption.GenerateKeys();
                 string Result;
-                string Connection;
                 using (WebClient web = new WebClient())
                 {
                     web.Headers.Add("Key", Encryption.MyPublicKey);
                     web.Headers.Add("Email", Encryption.Encrypt(Email));
                     web.Headers.Add("Password", Encryption.Encrypt(Password));
-                    Result = web.DownloadString($"https://{Domain}/Luski/api/Login");
+                    Result = web.DownloadString($"https://{Domain}/Luski/api/{API_Ver}/Login");
                     web.Headers.Clear();
-                    Connection = web.DownloadString($"https://{Domain}/Luski/info");
                 }
                 dynamic json = JsonConvert.DeserializeObject<dynamic>(Result);
-                dynamic info = JsonConvert.DeserializeObject<dynamic>(Connection);
-                if (string.IsNullOrEmpty((string)json.Error))
+                if (string.IsNullOrEmpty((string)json.error))
                 {
                     string LoginToken = (string)json["Login Token"];
-                    string Base = info["TCP Server"];
-                    if (info["TCP Port"] != "443")
-                    {
-                        Base += $":{info["TCP Port"]}";
-                    }
-
-                    ServerOut = new WebSocket($"wss://{Base}/Luski");
+                    ServerOut = new WebSocket($"wss://{Domain}/Luski/WSS/{API_Ver}");
+                    ServerOut.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.None;
                     ServerOut.OnMessage += DataFromServer;
                     ServerOut.WaitTime = new TimeSpan(0, 0, 5);
+                    ServerOut.OnError += ServerOut_OnError;
                     ServerOut.Connect();
                     JObject Infermation = new JObject
                     {
-                        { "Token", LoginToken }
+                        { "token", LoginToken }
                     };
                     SendServer(JsonRequest.Send("Login", Infermation));
                     while (Token == null && Error == null)
@@ -109,7 +99,7 @@ namespace Luski.net
                     {
                         web.Headers.Add("Token", Token);
                         web.Headers.Add("Id", Encoding.UTF8.GetString(Convert.FromBase64String(Token.Split('.')[0])));
-                        data = web.DownloadString($"https://{Domain}/Luski/api/SocketUser");
+                        data = web.DownloadString($"https://{Domain}/Luski/api/{API_Ver}/SocketUser");
                     }
                     _user = new SocketAppUser(data);
                     _user.Email = Email;
@@ -117,7 +107,15 @@ namespace Luski.net
                 }
                 else
                 {
-                    throw new Exception((string)json.Error);
+                    throw new Exception((string)json.error);
+                }
+            }
+
+            private void ServerOut_OnError(object sender, WebSocketSharp.ErrorEventArgs e)
+            {
+                if (OnError != null)
+                {
+                    OnError.Invoke(new Exception(e.Message));
                 }
             }
 
@@ -125,7 +123,6 @@ namespace Luski.net
             {
                 Encryption.GenerateKeys();
                 string Result;
-                string Connection;
                 using (WebClient web = new WebClient())
                 {
                     web.Headers.Add("Key", Encryption.MyPublicKey);
@@ -133,29 +130,22 @@ namespace Luski.net
                     web.Headers.Add("Password", Encryption.Encrypt(Password));
                     web.Headers.Add("Username", Username);
                     byte[] bytes = ImageToByteArray(PFP);
-                    string pfp = BitConverter.ToString(bytes);
-                    Result = web.UploadString($"https://{Domain}/Luski/api/CreateAccount", "POST", pfp);
+                    //string pfp = BitConverter.ToString(bytes);
+                    Result = web.UploadString($"https://{Domain}/Luski/api/{API_Ver}/CreateAccount", "POST", Convert.ToBase64String(bytes));
                     web.Headers.Clear();
-                    Connection = web.DownloadString($"https://{Domain}/Luski/info");
                 }
                 dynamic json = JsonConvert.DeserializeObject<dynamic>(Result);
-                dynamic info = JsonConvert.DeserializeObject<dynamic>(Connection);
                 if (string.IsNullOrEmpty((string)json.Error))
                 {
                     string LoginToken = (string)json["Login Token"];
-                    string Base = info["TCP Server"];
-                    if (info["TCP Port"] != "443")
-                    {
-                        Base += $":{info["TCP Port"]}";
-                    }
-
-                    ServerOut = new WebSocket($"wss://{Base}/Luski");
+                    ServerOut = new WebSocket($"wss://{Domain}/Luski/WSS/{API_Ver}");
+                    ServerOut.SslConfiguration.EnabledSslProtocols = System.Security.Authentication.SslProtocols.None;
                     ServerOut.OnMessage += DataFromServer;
                     ServerOut.WaitTime = new TimeSpan(0, 0, 5);
                     ServerOut.Connect();
                     JObject Infermation = new JObject
                     {
-                        { "Token", LoginToken }
+                        { "token", LoginToken }
                     };
                     SendServer(JsonRequest.Send("Login", Infermation));
                     while (Token == null && Error == null)
@@ -172,7 +162,7 @@ namespace Luski.net
                     {
                         web.Headers.Add("Token", Token);
                         web.Headers.Add("Id", Encoding.UTF8.GetString(Convert.FromBase64String(Token.Split('.')[0])));
-                        data = web.DownloadString($"https://{Domain}/Luski/api/SocketUser");
+                        data = web.DownloadString($"https://{Domain}/Luski/api/{API_Ver}/SocketUser");
                     }
                     _user = new SocketAppUser(data);
                     _user.Email = Email;
@@ -197,14 +187,40 @@ namespace Luski.net
                 return client;
             }
 
-            public void SendFriendResult(ulong user, bool answer)
+            public IRemoteUser SendFriendResult(ulong user, bool answer)
             {
-                SendServer(JsonRequest.Send("Friend Request Result", JsonRequest.FriendRequestResult(user, answer)));
+                string data;
+                using (WebClient web = new WebClient())
+                {
+                    web.Headers.Add("Token", Token);
+                    data = web.UploadString($"https://{Domain}/Luski/api/{API_Ver}/FriendRequestResult", JsonRequest.FriendRequestResult(user, answer).ToString());
+                }
+
+                dynamic json = JsonConvert.DeserializeObject<dynamic>(data);
+                if ((string)json.error != null) throw new Exception((string)json.error);
+                if (answer)
+                {
+                    SocketChannel chan = new SocketChannel((ulong)json.channel);
+                    chans.Add(chan);
+                }
+                SocketRemoteUser from1 = new SocketRemoteUser(user);
+                return from1;
+                //SendServer(JsonRequest.Send("Friend Request Result", JsonRequest.FriendRequestResult(user, answer)));
             }
 
             public void SendFriendRequest(ulong user)
             {
                 SendServer(JsonRequest.Send("Friend Request", JsonRequest.FriendRequest(user)));
+            }
+
+            public void SendFriendRequest(string username, short tag)
+            {
+                SendServer(JsonRequest.Send("Friend Request", JsonRequest.FriendRequest(username, tag)));
+            }
+
+            public void SendFriendRequest(string username, string tag)
+            {
+                SendServer(JsonRequest.Send("Friend Request", JsonRequest.FriendRequest(username, tag)));
             }
 
             public void UpdateStatus(UserStatus Status)
@@ -221,44 +237,50 @@ namespace Luski.net
 
             public void SendMessage(string Message, ulong Channel)
             {
-                SendServer(JsonRequest.Send("Message Create", JsonRequest.Message(Message, Channel)));
+                string data;
+                using (WebClient web = new WebClient())
+                {
+                    web.Headers.Add("Token", Token);
+                    data = web.UploadString($"https://{Domain}/Luski/api/{API_Ver}/socketmessage", JsonRequest.Message(Message, Channel).ToString());
+                }
+                if (data.ToLower().Contains("error")) throw new Exception(data);
             }
-
+            
             private void DataFromServer(object sender, MessageEventArgs e)
             {
                 string raw = e.Data;
                 dynamic data = JsonConvert.DeserializeObject<dynamic>(raw);
-                switch ((string)data.Type)
+                switch ((string)data.type)
                 {
                     case "Login":
-                        Token = (string)data.Token;
+                        Token = (string)data.token;
                         break;
                     case "Error":
                         if (Token == null)
                         {
-                            Error = (string)data.Error;
+                            Error = (string)data.error;
                         }
                         else
                         {
                             if (OnError != null)
                             {
-                                OnError.Invoke(new Exception((string)data.Error));
+                                OnError.Invoke(new Exception((string)data.error));
                             }
                         }
                         break;
                     case "Message Create":
                         if (MessageReceived != null)
                         {
-                            SocketMessage msg = new SocketMessage((string)data.Data);
+                            SocketMessage msg = new SocketMessage(((object)data.data).ToString());
                             MessageReceived.Invoke(msg);
                         }
                         break;
                     case "Status Update":
                         if (UserStatusUpdate != null)
                         {
-                            SocketRemoteUser after = new SocketRemoteUser((ulong)data.Data.Id);
+                            SocketRemoteUser after = new SocketRemoteUser((ulong)data.data.id);
                             UserStatus st = UserStatus.Offline;
-                            switch (((string)data.Data.Before).ToLower())
+                            switch (((string)data.data.before).ToLower())
                             {
                                 case "online":
                                     st = UserStatus.Online;
@@ -284,21 +306,23 @@ namespace Luski.net
                     case "Frined Request":
                         if (ReceivedFriendRequest != null)
                         {
-                            SocketRemoteUser from = new SocketRemoteUser((ulong)data.Data.From);
+                            SocketRemoteUser from = new SocketRemoteUser((ulong)data.data.from);
                             ReceivedFriendRequest.Invoke(from);
                         }
                         break;
                     case "Friend Request Result":
                         if (FriendRequestResult != null)
                         {
-                            SocketRemoteUser from1 = new SocketRemoteUser((ulong)data.Data.Id);
-                            FriendRequestResult.Invoke(from1, (bool)data.Data.Result);
+                            SocketChannel chan = new SocketChannel((ulong)data.data.channel);
+                            chans.Add(chan);
+                            SocketRemoteUser from1 = new SocketRemoteUser((ulong)data.data.id);
+                            FriendRequestResult.Invoke(from1, (bool)data.data.result);
                         }
                         break;
                     case "Call Info":
                         if (AudioClient != null)
                         {
-                            AudioClient.Samples = (int)data.Data.SamplesPerSecond;
+                            AudioClient.Samples = (int)data.data.SamplesPerSecond;
                         }
                         break;
                     case "Call Data":
@@ -328,8 +352,6 @@ namespace Luski.net
             }
 
             public IAppUser CurrentUser => _user;
-
-            internal SocketAppUser User => _user;
         }
 
         internal static void SendServer(JObject data)

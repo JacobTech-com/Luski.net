@@ -1,6 +1,7 @@
 ﻿using Luski.net.Interfaces;
 using Newtonsoft.Json;
 using System.Net;
+using System.Linq;
 
 namespace Luski.net.Sockets
 {
@@ -22,7 +23,7 @@ namespace Luski.net.Sockets
                     {
                         web.Headers.Add("Token", Server.Token);
                         web.Headers.Add("Id", id.ToString());
-                        data = web.DownloadString($"https://{Server.Domain}/Luski/api/socketuser");
+                        data = web.DownloadString($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/socketuser");
                     }
                     break;
                 }
@@ -34,30 +35,28 @@ namespace Luski.net.Sockets
         {
             dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
             Channel = null;
-            if ((ulong)data.Id != Server.ID)
+            if ((ulong)data.id != Server.ID)
             {
-                switch (((string)data["Friend Status"]).ToLower())
+                switch (((string)data["friend_status"]).ToLower())
                 {
                     case "notfriends":
                         FriendStatus = FriendStatus.NotFriends;
                         break;
                     case "friends":
                         FriendStatus = FriendStatus.Friends;
-                        
-                        foreach (IChannel chan in Server.Channels)
+                        if (ID != 0)
                         {
-                            if (chan.Type == ChannelType.DM)
+                            foreach (IChannel chan in Server.chans)
                             {
-                                foreach (IUser mem in chan.Members)
+                                if (chan.Type == ChannelType.DM && chan.Id != 0 && chan.Members != null)
                                 {
-                                    if (mem.ID == ID)
-                                    {
-                                        Channel = chan;
-                                        break;
-                                    }
+                                    if (chan.Members.Any(s => s.ID == ID)) Channel = chan;
                                 }
-                                break;
                             }
+                        }
+                        else
+                        {
+                            Channel = new SocketChannel(0);
                         }
                         break;
                     case "pendingout":
