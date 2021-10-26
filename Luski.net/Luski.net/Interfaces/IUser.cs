@@ -10,7 +10,7 @@ namespace Luski.net.Interfaces
         /// <summary>
         /// The current Id of the user
         /// </summary>
-        ulong ID { get; }
+        long ID { get; }
         /// <summary>
         /// The cerrent username of the user
         /// </summary>
@@ -19,11 +19,11 @@ namespace Luski.net.Interfaces
         /// The current tag for the user
         /// Ex: #1234
         /// </summary>
-        int Tag { get; }
+        short Tag { get; }
         /// <summary>
         /// The current channel the user is looking at
         /// </summary>
-        ulong SelectedChannel { get; }
+        long SelectedChannel { get; }
         /// <summary>
         /// The current status of the user
         /// </summary>
@@ -31,7 +31,7 @@ namespace Luski.net.Interfaces
         /// <summary>
         /// Gets the current avatar of the user
         /// </summary>
-        Image GetAvatar();
+        Bitmap GetAvatar();
         /// <summary>
         /// Returns a json formated string of the user
         /// </summary>

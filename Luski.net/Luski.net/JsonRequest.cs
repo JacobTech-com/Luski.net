@@ -4,47 +4,46 @@ namespace Luski.net
 {
     internal static class JsonRequest
     {
-        internal static JObject SendData(byte[] Data, ulong to)
+        internal static JObject SendCallData(byte[] Data, long channel)
         {
             JObject @out = new JObject
             {
                 { "data", Data },
-                { "id", to }
+                { "id", channel }
             };
             return @out;
         }
 
-        internal static JObject JoinCall(ulong Channel)
+        internal static JObject JoinCall(long Channel)
         {
             JObject @out = new JObject
             {
-                { "type", "dm" },
                 { "id", Channel }
             };
             return @out;
         }
 
-        internal static JObject Send(string Request, JObject Data)
+        internal static JObject Send(DataType Request, JObject Data)
         {
             JObject @out = new JObject
             {
-                { "type", Request },
+                { "type", (int)Request },
                 { "data", Data }
             };
             return @out;
         }
 
-        internal static JObject Message(string Message, ulong Channel)
+        internal static JObject Message(string Message, long Channel)
         {
             JObject @out = new JObject
             {
                 { "channel_id", Channel },
-                { "content", Message }
+                { "content", Encryption.Encrypt(Message) }
             };
             return @out;
         }
 
-        internal static JObject Channel(ulong Channel)
+        internal static JObject Channel(long Channel)
         {
             JObject @out = new JObject
             {
@@ -55,33 +54,14 @@ namespace Luski.net
 
         internal static JObject Status(UserStatus Status)
         {
-            string stat = "";
-            switch (Status)
-            {
-                case UserStatus.Online:
-                    stat = "online";
-                    break;
-                case UserStatus.Offline:
-                    stat = "offline";
-                    break;
-                case UserStatus.Invisible: // not finished on server side
-                    stat = "offline";
-                    break;
-                case UserStatus.Idle:
-                    stat = "idle";
-                    break;
-                case UserStatus.DoNotDisturb: //not finished on servre side
-                    stat = "online";
-                    break;
-            }
             JObject @out = new JObject
             {
-                { "status", stat }
+                { "status", (int)Status }
             };
             return @out;
         }
 
-        internal static JObject FriendRequestResult(ulong User, bool Result)
+        internal static JObject FriendRequestResult(long User, bool Result)
         {
             JObject @out = new JObject
             {
@@ -91,11 +71,11 @@ namespace Luski.net
             return @out;
         }
 
-        internal static JObject FriendRequest(ulong User)
+        internal static JObject FriendRequest(long User)
         {
             JObject @out = new JObject
             {
-                { "type", "id" },
+                { "type", 0 },
                 { "id", User }
             };
             return @out;
@@ -105,18 +85,7 @@ namespace Luski.net
         {
             JObject @out = new JObject
             {
-                { "type", "tag" },
-                { "username", Username },
-                { "tag", tag }
-            };
-            return @out;
-        }
-
-        internal static JObject FriendRequest(string Username, string tag)
-        {
-            JObject @out = new JObject
-            {
-                { "type", "tag" },
+                { "type", 1 },
                 { "username", Username },
                 { "tag", tag }
             };

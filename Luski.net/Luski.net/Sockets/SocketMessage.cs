@@ -11,13 +11,13 @@ namespace Luski.net.Sockets
         internal SocketMessage(string json)
         {
             dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
-            ChannelId = (ulong)data.channel_id;
-            AuthorId = (ulong)data.user_id;
-            Context = (string)data.content;
-            Id = (ulong)data.id;
+            ChannelID = (long)data.channel_id;
+            AuthorID = (long)data.user_id;
+            Context = Encryption.Decrypt((string)data.content);
+            Id = (long)data.id;
         }
 
-        internal SocketMessage(ulong ID, ulong Channel)
+        internal SocketMessage(long ID, long Channel)
         {
             string json;
             while (true)
@@ -26,9 +26,9 @@ namespace Luski.net.Sockets
                 {
                     using (WebClient web = new WebClient())
                     {
-                        web.Headers.Add("Token", Server.Token);
-                        web.Headers.Add("MSG_Id", ID.ToString());
-                        web.Headers.Add("Channel_Id", Channel.ToString());
+                        web.Headers.Add("token", Server.Token);
+                        web.Headers.Add("msg_id", ID.ToString());
+                        web.Headers.Add("channel_id", Channel.ToString());
                         json = web.DownloadString($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/socketmessage");
                     }
                     break;
@@ -38,10 +38,10 @@ namespace Luski.net.Sockets
             string error = (string)data.error;
             if (string.IsNullOrEmpty(error))
             {
-                ChannelId = (ulong)data.channel_id;
-                AuthorId = (ulong)data.user_id;
-                Context = (string)data.content;
-                Id = (ulong)data.id;
+                ChannelID = (long)data.channel_id;
+                AuthorID = (long)data.user_id;
+                Context = Encryption.Decrypt((string)data.content);
+                Id = (long)data.id;
             }
             else
             {
@@ -49,20 +49,20 @@ namespace Luski.net.Sockets
             }
         }
 
-        private ulong ChannelId { get; }
-        private ulong AuthorId { get; }
-        public ulong Id { get; }
+        public long ChannelID { get; }
+        public long AuthorID { get; }
+        public long Id { get; }
         public string Context { get; }
 
         public IChannel GetChannel()
         {
-            if (Server.chans.Any(s => s.Id == ChannelId))
+            if (Server.chans.Any(s => s.Id == ChannelID))
             {
-                return Server.chans.Where(s => s.Id == ChannelId).First();
+                return Server.chans.Where(s => s.Id == ChannelID).First();
             }
             else
             {
-                SocketChannel ch = new SocketChannel(ChannelId);
+                SocketChannel ch = new SocketChannel(ChannelID);
                 Server.chans.Add(ch);
                 return ch;
             }
@@ -70,19 +70,19 @@ namespace Luski.net.Sockets
 
         public IUser GetAuthor()
         {
-            if (Server.poeople.Any(s => s.ID == AuthorId))
+            if (Server.poeople.Any(s => s.ID == AuthorID))
             {
-                return Server.poeople.Where(s => s.ID == AuthorId).First();
+                return Server.poeople.Where(s => s.ID == AuthorID).First();
             }
             else
             {
-                SocketUserBase usr = new SocketUserBase(IdToJson(AuthorId));
+                SocketUserBase usr = new SocketUserBase(IdToJson(AuthorID));
                 Server.poeople.Add(usr);
                 return usr;
             }
         }
 
-        private static string IdToJson(ulong id)
+        private static string IdToJson(long id)
         {
             string data;
             while (true)
@@ -91,8 +91,8 @@ namespace Luski.net.Sockets
                 {
                     using (WebClient web = new WebClient())
                     {
-                        web.Headers.Add("Token", Server.Token);
-                        web.Headers.Add("Id", id.ToString());
+                        web.Headers.Add("token", Server.Token);
+                        web.Headers.Add("id", id.ToString());
                         data = web.DownloadString($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/socketuser");
                     }
                     break;

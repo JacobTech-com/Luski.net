@@ -19,21 +19,21 @@ namespace Luski.net.Sockets
             _Channels = new List<IChannel>();
             _Friends = new List<IRemoteUser>();
             _FriendRequests = new List<IRemoteUser>();
-            foreach (JToken channel in Chan)
+            foreach (long channel in Chan)
             {
-                SocketChannel channeljson = new SocketChannel(ulong.Parse(channel.ToString()));
+                SocketChannel channeljson = new SocketChannel(channel);
                 Server.chans.Add(channeljson);
                 _Channels.Add(channeljson);
             }
-            foreach (JToken user in Friend)
+            foreach (long user in Friend)
             {
-                SocketRemoteUser fr = new SocketRemoteUser(ulong.Parse(user["user_id"].ToString()));
+                SocketRemoteUser fr = new SocketRemoteUser(user);
                 Server.poeople.Add(fr);
                 _Friends.Add(fr);
             }
             foreach (JToken user in FriendReq)
             {
-                ulong id = ulong.Parse(user["user_id"].ToString()) == ID ? ulong.Parse(user["from"].ToString()) : ulong.Parse(user["user_id"].ToString());
+                long id = long.Parse(user["user_id"].ToString()) == ID ? long.Parse(user["from"].ToString()) : long.Parse(user["user_id"].ToString());
                 SocketRemoteUser frq = new SocketRemoteUser(id);
                 Server.poeople.Add(frq);
                 _FriendRequests.Add(frq);
@@ -77,12 +77,8 @@ namespace Luski.net.Sockets
                 {
                     Server.poeople.Remove(item);
                 }
-                Server.poeople.Add(User);
             }
-            else
-            {
-                Server.poeople.Add(User);
-            }
+            Server.poeople.Add(User);
             foreach (IRemoteUser user in _FriendRequests)
             {
                 if (User.ID == user.ID)

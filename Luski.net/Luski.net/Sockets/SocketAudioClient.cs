@@ -1,7 +1,9 @@
 ﻿using Luski.net.Interfaces;
 using Luski.net.Sound;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using static Luski.net.Exceptions;
@@ -10,9 +12,9 @@ namespace Luski.net.Sockets
 {
     internal class SocketAudioClient : IAudioClient
     {
-        internal SocketAudioClient(ulong Channel, Func<Exception, Task> error)
+        internal SocketAudioClient(long Channel, Func<Exception, Task> error)
         {
-            DM = Channel;
+            this.Channel = Channel;
             errorin = error;
             Muted = false;
             PrototolClient.DataComplete += new Protocol.DelegateDataComplete(OnProtocolClient_DataComplete);
@@ -81,7 +83,24 @@ namespace Luski.net.Sockets
             }
             else
             {
-                Server.ServerOut.Send(JsonRequest.Send("Join Call", JsonRequest.JoinCall(DM)).ToString());
+                //get info
+                string data;
+                while (true)
+                {
+                    if (Server.CanRequest)
+                    {
+                        using (WebClient web = new WebClient())
+                        {
+                            web.Headers.Add("token", Server.Token);
+                            web.Headers.Add("id", Channel.ToString());
+                            data = web.DownloadString($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/GetCallInfo");
+                        }
+                        break;
+                    }
+                }
+                dynamic json = JsonConvert.DeserializeObject<dynamic>(data);
+                Samples = (int)json.SamplesPerSecond;
+                //Server.ServerOut.Send(JsonRequest.Send(DataType.Join_Call, JsonRequest.JoinCall(Channel)).ToString());
             }
         }
 
@@ -104,7 +123,7 @@ namespace Luski.net.Sockets
         private bool recording = false;
         private long m_TimeStamp = 0;
         private Player PlayerClient;
-        private readonly ulong DM;
+        private readonly long Channel;
 
         private void StopPlayingToSounddevice_Client()
         {
@@ -122,7 +141,7 @@ namespace Luski.net.Sockets
 
         private async Task SocketAudioClient_DataRecived(JObject arg)
         {
-            dynamic d = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(arg.ToString());
+            dynamic d = JsonConvert.DeserializeObject<dynamic>(arg.ToString());
             byte[] data = (byte[])d.data;
             PrototolClient.Receive_LH(this, data);
         }
@@ -134,7 +153,7 @@ namespace Luski.net.Sockets
                 return;
             }
 
-            JObject d = JsonRequest.Send("Call Data", JsonRequest.SendData(PrototolClient.ToBytes(data), DM));
+            JObject d = JsonRequest.Send(DataType.Call_Data, JsonRequest.SendCallData(PrototolClient.ToBytes(data), Channel));
             Server.ServerOut.Send(d.ToString());
         }
 

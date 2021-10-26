@@ -7,12 +7,12 @@ namespace Luski.net.Sockets
 {
     internal class SocketRemoteUser : SocketUserBase, IRemoteUser
     {
-        internal SocketRemoteUser(ulong ID) : this(IdToJson(ID))
+        internal SocketRemoteUser(long ID) : this(IdToJson(ID))
         {
 
         }
 
-        private static string IdToJson(ulong id)
+        private static string IdToJson(long id)
         {
             string data;
             while (true)
@@ -21,8 +21,8 @@ namespace Luski.net.Sockets
                 {
                     using (WebClient web = new WebClient())
                     {
-                        web.Headers.Add("Token", Server.Token);
-                        web.Headers.Add("Id", id.ToString());
+                        web.Headers.Add("token", Server.Token);
+                        web.Headers.Add("id", id.ToString());
                         data = web.DownloadString($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/socketuser");
                     }
                     break;
@@ -31,40 +31,31 @@ namespace Luski.net.Sockets
             return data;
         }
 
+        public object Clone()
+        {
+            return MemberwiseClone();
+        }
+
         internal SocketRemoteUser(string json) : base(json)
         {
             dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
             Channel = null;
-            if ((ulong)data.id != Server.ID)
+            if ((long)data.id != Server.ID)
             {
-                switch (((string)data["friend_status"]).ToLower())
+                FriendStatus = (FriendStatus)(int)data.friend_status;
+                if (ID != 0)
                 {
-                    case "notfriends":
-                        FriendStatus = FriendStatus.NotFriends;
-                        break;
-                    case "friends":
-                        FriendStatus = FriendStatus.Friends;
-                        if (ID != 0)
+                    foreach (IChannel chan in Server.chans)
+                    {
+                        if (chan.Type == ChannelType.DM && chan.Id != 0 && chan.Members != null)
                         {
-                            foreach (IChannel chan in Server.chans)
-                            {
-                                if (chan.Type == ChannelType.DM && chan.Id != 0 && chan.Members != null)
-                                {
-                                    if (chan.Members.Any(s => s.ID == ID)) Channel = chan;
-                                }
-                            }
+                            if (chan.Members.Any(s => s.ID == ID)) Channel = chan;
                         }
-                        else
-                        {
-                            Channel = new SocketChannel(0);
-                        }
-                        break;
-                    case "pendingout":
-                        FriendStatus = FriendStatus.PendingOut;
-                        break;
-                    case "pendingin":
-                        FriendStatus = FriendStatus.PendingIn;
-                        break;
+                    }
+                }
+                else
+                {
+                    Channel = new SocketChannel(0);
                 }
             }
             else

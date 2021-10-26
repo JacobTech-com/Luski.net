@@ -51,8 +51,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Branch.cs" />
     <Compile Include="ChannelType.cs" />
+    <Compile Include="DataType.cs" />
     <Compile Include="Encryption.cs" />
+    <Compile Include="ErrorCode.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="FriendStatus.cs" />
     <Compile Include="Interfaces\IAudioClient.cs" />
@@ -62,6 +65,7 @@
     <Compile Include="Interfaces\IRemoteUser.cs" />
     <Compile Include="Interfaces\IUser.cs" />
     <Compile Include="JsonRequest.cs" />
+    <Compile Include="PictureType.cs" />
     <Compile Include="Server.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Sockets\SocketAppUser.cs" />

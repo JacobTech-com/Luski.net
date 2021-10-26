@@ -17,7 +17,7 @@ namespace Luski.net.Sockets
             string error = (string)data.error;
             if (string.IsNullOrEmpty(error))
             {
-                Id = (ulong)data.id;
+                Id = (long)data.id;
                 Title = (string)data.title;
                 Description = (string)data.description;
                 switch (((string)data.type).ToLower())
@@ -31,20 +31,19 @@ namespace Luski.net.Sockets
                 }
                 _members = new List<IUser>();
                 JArray mem = DataBinder.Eval(data, "members");
-                foreach (JToken person in mem)
+                foreach (long person in mem)
                 {
-                    ulong per = ulong.Parse(person.ToString());
-                    if (Server._user.Friends.Any(s => s.ID == per))
+                    if (Server._user.Friends.Any(s => s.ID == person))
                     {
-                        _members.Add(Server._user.Friends.Where(s => s.ID == per).First());
+                        _members.Add(Server._user.Friends.Where(s => s.ID == person).First());
                     }
-                    else if (Server._user.FriendRequests.Any(s => s.ID == per))
+                    else if (Server._user.FriendRequests.Any(s => s.ID == person))
                     {
-                        _members.Add(Server._user.FriendRequests.Where(s => s.ID == per).First());
+                        _members.Add(Server._user.FriendRequests.Where(s => s.ID == person).First());
                     }
                     else
                     {
-                        _members.Add(new SocketUserBase(IdToJson(per)));
+                        _members.Add(new SocketUserBase(IdToJson(person)));
                     }
                 }
             }
@@ -54,7 +53,7 @@ namespace Luski.net.Sockets
             }
         }
 
-        private static string IdToJson(ulong id)
+        private static string IdToJson(long id)
         {
             string data;
             while (true)
@@ -63,8 +62,8 @@ namespace Luski.net.Sockets
                 {
                     using (WebClient web = new WebClient())
                     {
-                        web.Headers.Add("Token", Server.Token);
-                        web.Headers.Add("Id", id.ToString());
+                        web.Headers.Add("token", Server.Token);
+                        web.Headers.Add("id", id.ToString());
                         data = web.DownloadString($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/socketuser");
                     }
                     break;
@@ -73,7 +72,7 @@ namespace Luski.net.Sockets
             return data;
         }
 
-        internal SocketChannel(ulong id)
+        internal SocketChannel(long id)
         {
             string json;
             while (true)
@@ -82,8 +81,8 @@ namespace Luski.net.Sockets
                 {
                     using (WebClient web = new WebClient())
                     {
-                        web.Headers.Add("Token", Server.Token);
-                        web.Headers.Add("Id", id.ToString());
+                        web.Headers.Add("token", Server.Token);
+                        web.Headers.Add("id", id.ToString());
                         json = web.DownloadString($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/SocketChannel");
                     }
                     break;
@@ -93,28 +92,19 @@ namespace Luski.net.Sockets
             string error = (string)data.error;
             if (string.IsNullOrEmpty(error))
             {
-                Id = (ulong)data.id;
+                Id = id;
                 Title = (string)data.title;
                 Description = (string)data.description;
                 if (Id != 0)
                 {
                     _members = new List<IUser>();
                     JArray mem = DataBinder.Eval(data, "members");
-                    foreach (JToken person in mem)
+                    foreach (long person in mem)
                     {
-                        ulong per = ulong.Parse(person.ToString());
-                        _members.Add(new SocketUserBase(IdToJson(per)));
+                        _members.Add(new SocketUserBase(IdToJson(person)));
                     }
                 }
-                switch (((string)data.type).ToLower())
-                {
-                    case "dm":
-                        Type = ChannelType.DM;
-                        break;
-                    case "group":
-                        Type = ChannelType.GROUP;
-                        break;
-                }
+                Type = (ChannelType)(int)data.type;
             }
             else
             {
@@ -122,7 +112,7 @@ namespace Luski.net.Sockets
             }
         }
 
-        public ulong Id { get; }
+        public long Id { get; }
         public string Title { get; }
         public string Description { get; }
         public ChannelType Type { get; }
@@ -133,15 +123,22 @@ namespace Luski.net.Sockets
 
         public void SendMessage(string Message)
         {
-            Server.SendServer(JsonRequest.Send("Message Create", JsonRequest.Message(Message, Id)));
+            
+            string data;
+            using (WebClient web = new WebClient())
+            {
+                web.Headers.Add("token", Server.Token);
+                data = web.UploadString($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/socketmessage", JsonRequest.Message(Message, Id).ToString());
+            }
+            if (data.ToLower().Contains("error")) throw new Exception(data);
         }
 
-        public IMessage GetMessage(ulong ID)
+        public IMessage GetMessage(long ID)
         {
             return new SocketMessage(ID, Id);
         }
 
-        public IReadOnlyList<IMessage> GetMessages(ulong MRID, int count = 50)
+        public IReadOnlyList<IMessage> GetMessages(long MRID, int count = 50)
         {
             if (count > 200)
             {
@@ -156,10 +153,10 @@ namespace Luski.net.Sockets
                 string json;
                 using (WebClient web = new WebClient())
                 {
-                    web.Headers.Add("Token", Server.Token);
-                    web.Headers.Add("Channel_Id", Id.ToString());
-                    web.Headers.Add("Messages", count.ToString());
-                    web.Headers.Add("MostRecentID", MRID.ToString());
+                    web.Headers.Add("token", Server.Token);
+                    web.Headers.Add("channel_id", Id.ToString());
+                    web.Headers.Add("messages", count.ToString());
+                    web.Headers.Add("mostrecentid", MRID.ToString());
                     json = web.DownloadString($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/SocketBulkMessage");
                 }
                 dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
@@ -196,9 +193,9 @@ namespace Luski.net.Sockets
                 string json;
                 using (WebClient web = new WebClient())
                 {
-                    web.Headers.Add("Token", Server.Token);
-                    web.Headers.Add("Channel_Id", Id.ToString());
-                    web.Headers.Add("Messages", count.ToString());
+                    web.Headers.Add("token", Server.Token);
+                    web.Headers.Add("id", Id.ToString());
+                    web.Headers.Add("messages", count.ToString());
                     json = web.DownloadString($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/SocketBulkMessage");
                 }
                 dynamic data = JsonConvert.DeserializeObject<dynamic>(json);
