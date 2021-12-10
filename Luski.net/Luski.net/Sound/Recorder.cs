@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace Luski.net.Sound
 {
@@ -10,8 +11,8 @@ namespace Luski.net.Sound
             delegateWaveInProc = new Win32.DelegateWaveInProc(WaveInProc);
         }
 
-        private readonly LockerClass Locker = new LockerClass();
-        private readonly LockerClass LockerCopy = new LockerClass();
+        private readonly LockerClass Locker = new();
+        private readonly LockerClass LockerCopy = new();
         private IntPtr hWaveIn = IntPtr.Zero;
         private string WaveInDeviceName = "";
         private bool IsWaveInOpened = false;
@@ -27,8 +28,8 @@ namespace Luski.net.Sound
         private Win32.WAVEHDR*[] WaveInHeaders;
         private Win32.WAVEHDR* CurrentRecordedHeader;
         private readonly Win32.DelegateWaveInProc delegateWaveInProc;
-        private System.Threading.Thread ThreadRecording;
-        private readonly System.Threading.AutoResetEvent AutoResetEventDataRecorded = new System.Threading.AutoResetEvent(false);
+        private Thread ThreadRecording;
+        private readonly AutoResetEvent AutoResetEventDataRecorded = new(false);
 
         internal delegate void DelegateStopped();
         internal delegate void DelegateDataRecorded(byte[] bytes);
@@ -82,7 +83,7 @@ namespace Luski.net.Sound
                         int count = 0;
                         while (count <= 100 && (WaveInHeaders[i]->dwFlags & Win32.WaveHdrFlags.WHDR_INQUEUE) == Win32.WaveHdrFlags.WHDR_INQUEUE)
                         {
-                            System.Threading.Thread.Sleep(20);
+                            Thread.Sleep(20);
                             count++;
                         }
 
@@ -107,10 +108,10 @@ namespace Luski.net.Sound
         {
             if (Started == false)
             {
-                ThreadRecording = new System.Threading.Thread(new System.Threading.ThreadStart(OnThreadRecording));
+                ThreadRecording = new Thread(new ThreadStart(OnThreadRecording));
                 IsThreadRecordingRunning = true;
                 ThreadRecording.Name = "Recording";
-                ThreadRecording.Priority = System.Threading.ThreadPriority.Highest;
+                ThreadRecording.Priority = ThreadPriority.Highest;
                 ThreadRecording.Start();
             }
         }
@@ -121,7 +122,7 @@ namespace Luski.net.Sound
             {
                 if (IsWaveInOpened == false)
                 {
-                    Win32.WAVEFORMATEX waveFormatEx = new Win32.WAVEFORMATEX
+                    Win32.WAVEFORMATEX waveFormatEx = new()
                     {
                         wFormatTag = (ushort)Win32.WaveFormatFlags.WAVE_FORMAT_PCM,
                         nChannels = (ushort)Channels,
@@ -218,7 +219,7 @@ namespace Luski.net.Sound
                 return false;
             }
         }
- 
+
         private void CloseWaveIn()
         {
             Win32.MMRESULT hr = Win32.waveInStop(hWaveIn);
@@ -227,7 +228,7 @@ namespace Luski.net.Sound
             while (IsAnyWaveInHeaderInState(Win32.WaveHdrFlags.WHDR_INQUEUE) & resetCount < 20)
             {
                 hr = Win32.waveInReset(hWaveIn);
-                System.Threading.Thread.Sleep(50);
+                Thread.Sleep(50);
                 resetCount++;
             }
 

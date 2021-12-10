@@ -1,4 +1,6 @@
-﻿namespace Luski.net.Interfaces
+﻿using File = Luski.net.JsonTypes.File;
+
+namespace Luski.net.Interfaces
 {
     public interface IMessage
     {
@@ -6,8 +8,8 @@
         string Context { get; }
         long AuthorID { get; }
         long ChannelID { get; }
+        File[]? Files { get; }
         IChannel GetChannel();
         IUser GetAuthor();
-        string ToString();
     }
 }

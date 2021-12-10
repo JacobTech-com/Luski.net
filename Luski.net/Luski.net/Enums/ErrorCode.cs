@@ -1,4 +1,4 @@
-﻿namespace Luski.net
+﻿namespace Luski.net.Enums
 {
     public enum ErrorCode
     {
@@ -7,6 +7,9 @@
         MissingPostData,
         InvalidPostData,
         Forbidden,
-        ServerError
+        ServerError,
+        MissingHeader,
+        InvalidHeader,
+        InvalidURL
     }
 }

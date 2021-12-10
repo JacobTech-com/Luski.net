@@ -17,8 +17,8 @@ namespace Luski.net.Sound
 
         internal static List<string> GetPlaybackNames()
         {
-            List<string> list = new List<string>();
-            Win32.WAVEOUTCAPS waveOutCap = new Win32.WAVEOUTCAPS();
+            List<string> list = new();
+            Win32.WAVEOUTCAPS waveOutCap = new();
 
             uint num = Win32.waveOutGetNumDevs();
             for (int i = 0; i < num; i++)
@@ -35,8 +35,8 @@ namespace Luski.net.Sound
 
         internal static List<string> GetRecordingNames()
         {
-            List<string> list = new List<string>();
-            Win32.WAVEINCAPS waveInCap = new Win32.WAVEINCAPS();
+            List<string> list = new();
+            Win32.WAVEINCAPS waveInCap = new();
 
             uint num = Win32.waveInGetNumDevs();
             for (int i = 0; i < num; i++)
@@ -55,7 +55,7 @@ namespace Luski.net.Sound
         {
             uint num = Win32.waveInGetNumDevs();
 
-            Win32.WAVEINCAPS caps = new Win32.WAVEINCAPS();
+            Win32.WAVEINCAPS caps = new();
             for (int i = 0; i < num; i++)
             {
                 Win32.HRESULT hr = (Win32.HRESULT)Win32.waveInGetDevCaps(i, ref caps, Marshal.SizeOf(typeof(Win32.WAVEINCAPS)));
@@ -75,7 +75,7 @@ namespace Luski.net.Sound
         {
             uint num = Win32.waveOutGetNumDevs();
 
-            Win32.WAVEOUTCAPS caps = new Win32.WAVEOUTCAPS();
+            Win32.WAVEOUTCAPS caps = new();
             for (int i = 0; i < num; i++)
             {
                 Win32.HRESULT hr = (Win32.HRESULT)Win32.waveOutGetDevCaps(i, ref caps, Marshal.SizeOf(typeof(Win32.WAVEOUTCAPS)));

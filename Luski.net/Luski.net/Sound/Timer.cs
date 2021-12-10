@@ -19,13 +19,13 @@ namespace Luski.net.Sound
 
         private readonly Win32.TimerEventHandler m_DelegateTimeEvent;
         internal delegate void DelegateTimerTick();
-        internal event DelegateTimerTick TimerTick;
+        internal event DelegateTimerTick? TimerTick;
 
-        internal void Start(uint milliseconds, uint dueTimeInMilliseconds)
+        internal void Start(uint milliseconds)
         {
             m_Milliseconds = milliseconds;
 
-            Win32.TimeCaps tc = new Win32.TimeCaps();
+            Win32.TimeCaps tc = new();
             Win32.TimeGetDevCaps(ref tc, (uint)Marshal.SizeOf(typeof(Win32.TimeCaps)));
             m_ResolutionInMilliseconds = Math.Max(tc.wPeriodMin, 0);
 
@@ -43,7 +43,7 @@ namespace Luski.net.Sound
         {
             if (m_TimerId > 0)
             {
-                Win32.TimeKillEvent(m_TimerId);
+                _ = Win32.TimeKillEvent(m_TimerId);
                 Win32.TimeEndPeriod(m_ResolutionInMilliseconds);
 
                 if (m_GCHandleTimer.IsAllocated)

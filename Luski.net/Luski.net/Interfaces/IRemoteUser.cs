@@ -1,4 +1,6 @@
-﻿namespace Luski.net.Interfaces
+﻿using Luski.net.Enums;
+
+namespace Luski.net.Interfaces
 {
     public interface IRemoteUser : IUser
     {

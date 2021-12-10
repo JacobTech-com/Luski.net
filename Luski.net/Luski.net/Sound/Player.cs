@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace Luski.net.Sound
 {
@@ -11,8 +12,8 @@ namespace Luski.net.Sound
             delegateWaveOutProc = new Win32.DelegateWaveOutProc(WaveOutProc);
         }
 
-        private readonly LockerClass Locker = new LockerClass();
-        private readonly LockerClass LockerCopy = new LockerClass();
+        private readonly LockerClass Locker = new();
+        private readonly LockerClass LockerCopy = new();
         private IntPtr hWaveOut = IntPtr.Zero;
         private string WaveOutDeviceName = "";
         private bool IsWaveOutOpened = false;
@@ -28,12 +29,12 @@ namespace Luski.net.Sound
         private readonly int BufferLength = 1024;
         private Win32.WAVEHDR*[] WaveOutHeaders;
         private readonly Win32.DelegateWaveOutProc delegateWaveOutProc;
-        private System.Threading.Thread ThreadPlayWaveOut;
-        private readonly System.Threading.AutoResetEvent AutoResetEventDataPlayed = new System.Threading.AutoResetEvent(false);
+        private Thread? ThreadPlayWaveOut;
+        private readonly AutoResetEvent AutoResetEventDataPlayed = new(false);
 
         internal delegate void DelegateStopped();
-        internal event DelegateStopped PlayerClosed;
-        internal event DelegateStopped PlayerStopped;
+        internal event DelegateStopped? PlayerClosed;
+        internal event DelegateStopped? PlayerStopped;
 
         internal bool Opened => IsWaveOutOpened & IsClosed == false;
 
@@ -96,7 +97,7 @@ namespace Luski.net.Sound
                         int count = 0;
                         while (count <= 100 && (WaveOutHeaders[i]->dwFlags & Win32.WaveHdrFlags.WHDR_INQUEUE) == Win32.WaveHdrFlags.WHDR_INQUEUE)
                         {
-                            System.Threading.Thread.Sleep(20);
+                            Thread.Sleep(20);
                             count++;
                         }
 
@@ -135,7 +136,7 @@ namespace Luski.net.Sound
             {
                 if (IsWaveOutOpened == false)
                 {
-                    Win32.WAVEFORMATEX waveFormatEx = new Win32.WAVEFORMATEX
+                    Win32.WAVEFORMATEX waveFormatEx = new()
                     {
                         wFormatTag = (ushort)Win32.WaveFormatFlags.WAVE_FORMAT_PCM,
                         nChannels = (ushort)Channels,
@@ -269,7 +270,7 @@ namespace Luski.net.Sound
                         int count = 0;
                         while (Win32.waveOutReset(hWaveOut) != Win32.MMRESULT.MMSYSERR_NOERROR && count <= 100)
                         {
-                            System.Threading.Thread.Sleep(50);
+                            Thread.Sleep(50);
                             count++;
                         }
 
@@ -278,7 +279,7 @@ namespace Luski.net.Sound
                         count = 0;
                         while (Win32.waveOutClose(hWaveOut) != Win32.MMRESULT.MMSYSERR_NOERROR && count <= 100)
                         {
-                            System.Threading.Thread.Sleep(50);
+                            Thread.Sleep(50);
                             count++;
                         }
 
@@ -296,7 +297,6 @@ namespace Luski.net.Sound
             }
         }
 
-
         private int GetNextFreeWaveOutHeaderIndex()
         {
             for (int i = 0; i < WaveOutHeaders.Length; i++)
@@ -309,12 +309,12 @@ namespace Luski.net.Sound
             return -1;
         }
 
-        private bool IsHeaderPrepared(Win32.WAVEHDR header)
+        private static bool IsHeaderPrepared(Win32.WAVEHDR header)
         {
             return (header.dwFlags & Win32.WaveHdrFlags.WHDR_PREPARED) > 0;
         }
 
-        private bool IsHeaderInqueue(Win32.WAVEHDR header)
+        private static bool IsHeaderInqueue(Win32.WAVEHDR header)
         {
             return (header.dwFlags & Win32.WaveHdrFlags.WHDR_INQUEUE) > 0;
         }

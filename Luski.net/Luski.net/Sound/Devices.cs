@@ -17,7 +17,7 @@ namespace Luski.net.Sound
         public static IReadOnlyList<RecordingDevice> GetRecordingDevices()
         {
             List<string> RecordingNames = WinSound.GetRecordingNames();
-            List<RecordingDevice> RecordingDevices = new List<RecordingDevice>();
+            List<RecordingDevice> RecordingDevices = new();
             foreach (string Device in RecordingNames)
             {
                 RecordingDevices.Add(new RecordingDevice(Device));
@@ -27,7 +27,7 @@ namespace Luski.net.Sound
         public static IReadOnlyList<PlaybackDevice> GetPlaybackDevices()
         {
             List<string> PlaybackName = WinSound.GetPlaybackNames();
-            List<PlaybackDevice> PlaybackDevices = new List<PlaybackDevice>();
+            List<PlaybackDevice> PlaybackDevices = new();
             foreach (string Device in PlaybackName)
             {
                 PlaybackDevices.Add(new PlaybackDevice(Device));

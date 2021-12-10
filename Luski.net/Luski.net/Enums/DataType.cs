@@ -1,4 +1,4 @@
-﻿namespace Luski.net
+﻿namespace Luski.net.Enums
 {
     internal enum DataType
     {
@@ -11,6 +11,8 @@
         Call_Info,
         Call_Data,
         Login,
-        Error
+        Error,
+        Key_Exchange,
+        MAX
     }
 }

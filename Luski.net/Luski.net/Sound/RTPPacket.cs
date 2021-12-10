@@ -26,7 +26,7 @@ namespace Luski.net.Sound
         internal ushort SequenceNumber = 0;
         internal uint Timestamp = 0;
         internal uint SourceId = 0;
-        internal byte[] Data;
+        internal byte[]? Data;
         internal ushort ExtensionHeaderId = 0;
         internal ushort ExtensionLengthAsCount = 0;
         internal int ExtensionLengthInBytes = 0;
@@ -82,11 +82,11 @@ namespace Luski.net.Sound
                 }
 
                 Data = new byte[data.Length - HeaderLength];
-                Array.Copy(data, HeaderLength, this.Data, 0, data.Length - HeaderLength);
+                Array.Copy(data, HeaderLength, Data, 0, data.Length - HeaderLength);
             }
         }
 
-        private int ValueFromByte(byte value, int startPos, int length)
+        private static int ValueFromByte(byte value, int startPos, int length)
         {
             byte mask = 0;
             for (int i = 0; i < length; i++)
@@ -100,7 +100,7 @@ namespace Luski.net.Sound
 
         internal byte[] ToBytes()
         {
-            byte[] bytes = new byte[this.HeaderLength + Data.Length];
+            byte[] bytes = new byte[HeaderLength + Data.Length];
 
             //Byte 0
             bytes[0] = (byte)(Version << 6);
@@ -131,7 +131,7 @@ namespace Luski.net.Sound
             bytes[10] = bytesSourceId[1];
             bytes[11] = bytesSourceId[0];
 
-            Array.Copy(this.Data, 0, bytes, this.HeaderLength, this.Data.Length);
+            Array.Copy(Data, 0, bytes, HeaderLength, Data.Length);
 
             return bytes;
         }

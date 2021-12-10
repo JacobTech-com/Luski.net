@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Luski.net.Enums;
+using System.Collections.Generic;
 
 namespace Luski.net.Interfaces
 {
@@ -10,6 +11,7 @@ namespace Luski.net.Interfaces
         long Id { get; }
         string Title { get; }
         string Description { get; }
+        string Key { get; }
         /// <summary>
         /// <see cref="IChannel.Type"/> returns the current <see cref="ChannelType"/> of the <see cref="IChannel"/>
         /// </summary>
@@ -23,6 +25,5 @@ namespace Luski.net.Interfaces
         IReadOnlyList<IMessage> GetMessages(long Message_Id, int count = 50);
         IReadOnlyList<IMessage> GetMessages(int count = 50);
         IReadOnlyList<IUser> Members { get; }
-        string ToString();
     }
 }

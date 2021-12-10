@@ -1,95 +1,76 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Luski.net.Enums;
+using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Text.Json;
+using File = Luski.net.JsonTypes.File;
 
 namespace Luski.net
 {
     internal static class JsonRequest
     {
-        internal static JObject SendCallData(byte[] Data, long channel)
+        internal static string SendCallData(byte[] Data, long channel)
         {
-            JObject @out = new JObject
+            return $"{{\"data\", \"{Convert.ToBase64String(Data)}\", \"id\": {channel}}}";
+        }
+        
+        internal static string JoinCall(long Channel)
+        {
+            return $"{{\"id\": {Channel}}}";
+        }
+        
+        internal static string Send(DataType Request, string Data)
+        {
+            return $"{{\"type\": {(int)Request}, \"data\": {Data}}}";
+        }
+
+        internal static string Send(DataType Request, object Data)
+        {
+            return $"{{\"type\": {(int)Request}, \"data\": {JsonSerializer.Serialize(Data)}}}";
+        }
+
+        internal static string Message(string Message, long Channel, params File[] Files)
+        {
+            string key = Encryption.File.Channels.GetKey(Channel);
+            string @out = $"{{\"channel_id\": {Channel}, \"content\": \"{Convert.ToBase64String(Encryption.Encrypt(Message, key))}\"";
+            if (Files != null && Files.Length > 0)
             {
-                { "data", Data },
-                { "id", channel }
-            };
+                List<string> bb = new();
+                for (int i = 0; i < Files.Length; i++)
+                {
+                    bb.Add(Files[i].encrypt(key));
+                    Files[i] = null;
+                }
+                @out += $", \"files\": [{string.Join(',', bb.ToArray())}]";
+            }
+            @out += "}";
+            Console.WriteLine(@out);
             return @out;
         }
 
-        internal static JObject JoinCall(long Channel)
+        internal static StringContent Channel(long Channel)
         {
-            JObject @out = new JObject
-            {
-                { "id", Channel }
-            };
-            return @out;
+            return new StringContent($"{{\"id\": {Channel}}}");
         }
 
-        internal static JObject Send(DataType Request, JObject Data)
+        internal static string Status(UserStatus Status)
         {
-            JObject @out = new JObject
-            {
-                { "type", (int)Request },
-                { "data", Data }
-            };
-            return @out;
+            return $"{{\"status\": {(int)Status}}}";
         }
 
-        internal static JObject Message(string Message, long Channel)
+        internal static string FriendRequestResult(long User, bool Result)
         {
-            JObject @out = new JObject
-            {
-                { "channel_id", Channel },
-                { "content", Encryption.Encrypt(Message) }
-            };
-            return @out;
+            return $"{{\"id\": {User},\"result\": {Result}}}";
         }
 
-        internal static JObject Channel(long Channel)
+        internal static string FriendRequest(long User)
         {
-            JObject @out = new JObject
-            {
-                { "id", Channel }
-            };
-            return @out;
+            return $"{{\"type\":0, \"id\": {User}}}";
         }
 
-        internal static JObject Status(UserStatus Status)
+        internal static string FriendRequest(string Username, short tag)
         {
-            JObject @out = new JObject
-            {
-                { "status", (int)Status }
-            };
-            return @out;
-        }
-
-        internal static JObject FriendRequestResult(long User, bool Result)
-        {
-            JObject @out = new JObject
-            {
-                { "id", User },
-                { "result", Result }
-            };
-            return @out;
-        }
-
-        internal static JObject FriendRequest(long User)
-        {
-            JObject @out = new JObject
-            {
-                { "type", 0 },
-                { "id", User }
-            };
-            return @out;
-        }
-
-        internal static JObject FriendRequest(string Username, short tag)
-        {
-            JObject @out = new JObject
-            {
-                { "type", 1 },
-                { "username", Username },
-                { "tag", tag }
-            };
-            return @out;
+            return $"{{\"type\":1, \"username\", \"{Username}\", \"tag\":{tag}}}";
         }
     }
 }

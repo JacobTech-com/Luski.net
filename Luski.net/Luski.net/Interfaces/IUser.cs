@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+﻿using Luski.net.Enums;
 
 namespace Luski.net.Interfaces
 {
@@ -17,7 +17,7 @@ namespace Luski.net.Interfaces
         string Username { get; }
         /// <summary>
         /// The current tag for the user
-        /// Ex: #1234
+        /// <para>Ex: #1234</para>
         /// </summary>
         short Tag { get; }
         /// <summary>
@@ -31,10 +31,11 @@ namespace Luski.net.Interfaces
         /// <summary>
         /// Gets the current avatar of the user
         /// </summary>
-        Bitmap GetAvatar();
+        byte[] GetAvatar();
         /// <summary>
-        /// Returns a json formated string of the user
+        /// Gets the current user key
         /// </summary>
-        string ToString();
+        /// <returns></returns>
+        string GetUserKey();
     }
 }

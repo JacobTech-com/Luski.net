@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 
 namespace Luski.net.Sound
@@ -22,12 +23,12 @@ namespace Luski.net.Sound
 
         private static WaveFileHeader ReadHeader(string fileName)
         {
-            WaveFileHeader header = new WaveFileHeader();
+            WaveFileHeader header = new();
 
             if (File.Exists(fileName))
             {
-                FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-                BinaryReader rd = new BinaryReader(fs, Encoding.UTF8);
+                FileStream fs = new(fileName, FileMode.Open, FileAccess.Read);
+                BinaryReader rd = new(fs, Encoding.UTF8);
 
                 if (fs.CanRead)
                 {
@@ -95,7 +96,7 @@ namespace Luski.net.Sound
         internal char[] DATA = new char[4];
         internal uint DATASize;
 
-        internal byte[] Payload = new byte[0];
+        internal byte[] Payload = Array.Empty<byte>();
 
         internal int DATAPos = 44;
         internal long FMTPos = 20;

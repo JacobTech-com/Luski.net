@@ -1,10 +1,10 @@
-﻿using Luski.net.Interfaces;
+﻿using Luski.net.Enums;
+using Luski.net.Interfaces;
 using Luski.net.Sound;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
-using System.Net;
+using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using static Luski.net.Exceptions;
 
@@ -12,7 +12,7 @@ namespace Luski.net.Sockets
 {
     internal class SocketAudioClient : IAudioClient
     {
-        internal SocketAudioClient(long Channel, Func<Exception, Task> error)
+        internal SocketAudioClient(long Channel, Func<Exception, Task>? error)
         {
             this.Channel = Channel;
             errorin = error;
@@ -21,7 +21,7 @@ namespace Luski.net.Sockets
             DataRecived += SocketAudioClient_DataRecived;
         }
 
-        public event Func<Task> Connected;
+        public event Func<Task>? Connected;
 
         public bool Muted { get; private set; }
 
@@ -89,16 +89,14 @@ namespace Luski.net.Sockets
                 {
                     if (Server.CanRequest)
                     {
-                        using (WebClient web = new WebClient())
-                        {
-                            web.Headers.Add("token", Server.Token);
-                            web.Headers.Add("id", Channel.ToString());
-                            data = web.DownloadString($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/GetCallInfo");
-                        }
+                        using HttpClient web = new();
+                        web.DefaultRequestHeaders.Add("token", Server.Token);
+                        web.DefaultRequestHeaders.Add("id", Channel.ToString());
+                        data = web.GetAsync($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/GetCallInfo").Result.Content.ReadAsStringAsync().Result;
                         break;
                     }
                 }
-                dynamic json = JsonConvert.DeserializeObject<dynamic>(data);
+                dynamic json = JsonSerializer.Deserialize<dynamic>(data);
                 Samples = (int)json.SamplesPerSecond;
                 //Server.ServerOut.Send(JsonRequest.Send(DataType.Join_Call, JsonRequest.JoinCall(Channel)).ToString());
             }
@@ -109,20 +107,20 @@ namespace Luski.net.Sockets
             throw new NotImplementedException();
         }
 
-        private readonly Protocol PrototolClient = new Protocol(ProtocolTypes.LH, Encoding.Default);
-        private JitterBuffer RecordingJitterBuffer = new JitterBuffer(null, JitterBuffer, 20);
-        private JitterBuffer PlayingJitterBuffer = new JitterBuffer(null, JitterBuffer, 20);
-        private readonly Func<Exception, Task> errorin;
-        private event Func<JObject, Task> DataRecived;
+        private readonly Protocol PrototolClient = new(ProtocolTypes.LH, Encoding.Default);
+        private JitterBuffer RecordingJitterBuffer = new(null, JitterBuffer, 20);
+        private JitterBuffer PlayingJitterBuffer = new(null, JitterBuffer, 20);
+        private readonly Func<Exception, Task>? errorin;
+        private event Func<string, Task> DataRecived;
         private static readonly uint JitterBuffer = 5;
         private readonly int BitsPerSample = 16;
         private long SequenceNumber = 4596;
         private readonly int Channels = 1;
-        private Recorder RecorderClient;
+        private Recorder? RecorderClient;
         private bool Connectedb = false;
         private bool recording = false;
         private long m_TimeStamp = 0;
-        private Player PlayerClient;
+        private Player? PlayerClient;
         private readonly long Channel;
 
         private void StopPlayingToSounddevice_Client()
@@ -139,9 +137,9 @@ namespace Luski.net.Sockets
             }
         }
 
-        private async Task SocketAudioClient_DataRecived(JObject arg)
+        private async Task SocketAudioClient_DataRecived(string arg)
         {
-            dynamic d = JsonConvert.DeserializeObject<dynamic>(arg.ToString());
+            dynamic d = JsonSerializer.Deserialize<dynamic>(arg.ToString());
             byte[] data = (byte[])d.data;
             PrototolClient.Receive_LH(this, data);
         }
@@ -153,18 +151,12 @@ namespace Luski.net.Sockets
                 return;
             }
 
-            JObject d = JsonRequest.Send(DataType.Call_Data, JsonRequest.SendCallData(PrototolClient.ToBytes(data), Channel));
-            Server.ServerOut.Send(d.ToString());
+            Server.ServerOut?.Send(JsonRequest.Send(DataType.Call_Data, JsonRequest.SendCallData(PrototolClient.ToBytes(data), Channel)));
         }
 
         internal void Givedata(dynamic data)
         {
-            JObject @out = new JObject
-            {
-                { "from", (ulong)data.data.from },
-                { "data", (string)data.data.data }
-            };
-            DataRecived.Invoke(@out);
+            DataRecived.Invoke($"{{\"from\":{(long)data.data.from}, \"data\": \"{(string)data.data.data}\"}}");
         }
 
         private int _samp;
@@ -176,7 +168,7 @@ namespace Luski.net.Sockets
             {
                 _samp = value;
                 Connectedb = true;
-                Connected.Invoke();
+                if (Connected is not null) Connected.Invoke();
                 PlaySoundTo(Devices.GetDefaltPlaybackDevice());
                 RecordSoundFrom(Devices.GetDefaltRecordingDevice());
             }
@@ -225,7 +217,7 @@ namespace Luski.net.Sockets
             }
             catch (Exception ex)
             {
-                System.Diagnostics.StackFrame sf = new System.Diagnostics.StackFrame(true);
+                System.Diagnostics.StackFrame sf = new(true);
                 errorin.Invoke(new Exception(string.Format("Exception: {0} StackTrace: {1}. FileName: {2} Method: {3} Line: {4}", ex.Message, ex.StackTrace, sf.GetFileName(), sf.GetMethod(), sf.GetFileLineNumber())));
             }
         }
@@ -321,7 +313,7 @@ namespace Luski.net.Sockets
         {
             byte[] mulaws = Utils.LinearToMulaw(linearData, bitsPerSample, channels);
 
-            RTPPacket rtp = new RTPPacket
+            RTPPacket rtp = new()
             {
                 Data = mulaws,
                 CSRCCount = 0,
@@ -362,7 +354,7 @@ namespace Luski.net.Sockets
             {
                 if (PlayerClient != null && PlayerClient.Opened)
                 {
-                    RTPPacket rtp = new RTPPacket(data);
+                    RTPPacket rtp = new(data);
 
                     if (rtp.Data != null)
                     {

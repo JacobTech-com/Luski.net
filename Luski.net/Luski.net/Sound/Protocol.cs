@@ -18,11 +18,11 @@ namespace Luski.net.Sound
             m_Encoding = encoding;
         }
 
-        private readonly List<byte> m_DataBuffer = new List<byte>();
+        private readonly List<byte> m_DataBuffer = new();
         private const int m_MaxBufferLength = 10000;
         private readonly ProtocolTypes m_ProtocolType = ProtocolTypes.LH;
         private readonly Encoding m_Encoding = Encoding.Default;
-        internal object m_LockerReceive = new object();
+        internal object m_LockerReceive = new();
 
         internal delegate void DelegateDataComplete(object sender, byte[] data);
         internal delegate void DelegateExceptionAppeared(object sender, Exception ex);

@@ -177,7 +177,7 @@ namespace Luski.net.Sound
 
         [DllImport("winmm.dll", SetLastError = true, EntryPoint = "timeEndPeriod")]
         internal static extern MMRESULT TimeEndPeriod(uint uPeriod);
-#pragma warning disable IDE1006 // Naming Styles
+
         [DllImport("winmm.dll", SetLastError = true, CharSet = CharSet.Auto)]
         internal static extern MMRESULT waveOutOpen(ref IntPtr hWaveOut, int uDeviceID, ref WAVEFORMATEX lpFormat, DelegateWaveOutProc dwCallBack, int dwInstance, int dwFlags);
 
@@ -236,8 +236,6 @@ namespace Luski.net.Sound
         internal static extern MMRESULT waveOutPause(IntPtr hWaveOut);
 
         [DllImport("winmm.dll", EntryPoint = "waveOutRestart", SetLastError = true)]
-
         internal static extern MMRESULT waveOutRestart(IntPtr hWaveOut);
-#pragma warning restore IDE1006 // Naming Styles
     }
 }

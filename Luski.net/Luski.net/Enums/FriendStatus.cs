@@ -1,9 +1,9 @@
-﻿namespace Luski.net
+﻿namespace Luski.net.Enums
 {
     public enum FriendStatus
     {
-        Friends,
         NotFriends,
+        Friends,
         PendingOut,
         PendingIn
     }

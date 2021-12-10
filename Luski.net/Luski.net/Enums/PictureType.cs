@@ -1,8 +1,5 @@
-﻿namespace Luski.net
+﻿namespace Luski.net.Enums
 {
-    /// <summary>
-    /// <see cref="PictureType"/> is a list of all souported profile picture types
-    /// </summary>
     public enum PictureType
     {
         png,

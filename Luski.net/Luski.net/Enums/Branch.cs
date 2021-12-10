@@ -1,4 +1,4 @@
-﻿namespace Luski.net
+﻿namespace Luski.net.Enums
 {
     public enum Branch
     {
