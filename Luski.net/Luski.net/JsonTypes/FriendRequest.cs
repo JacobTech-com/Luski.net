@@ -2,6 +2,6 @@
 {
     internal class FriendRequest
     {
-        public long from { get; set; }
+        public long id { get; set; }
     }
 }

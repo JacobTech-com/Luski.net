@@ -124,8 +124,14 @@ namespace Luski.net.JsonTypes
                 web.DefaultRequestHeaders.Add("token", Server.Token);
                 data = web.GetAsync($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/Keys/GetUserKey/{ID}").Result.Content.ReadAsStringAsync().Result;
             }
-            IncomingHTTP? json = JsonSerializer.Deserialize(data, IncomingHTTPContext.Default.IncomingHTTP);
-            if (json is not null && json.error is not null) return data;
+            IncomingHTTP? json = null;
+            try
+            { json = JsonSerializer.Deserialize(data, IncomingHTTPContext.Default.IncomingHTTP); }
+            catch
+            {
+                return data;
+            }
+
             throw (json?.error) switch
             {
                 ErrorCode.InvalidToken => new Exception("Your current token is no longer valid"),

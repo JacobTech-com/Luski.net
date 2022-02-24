@@ -14,23 +14,23 @@ namespace Luski.net.JsonTypes
         public string name { get; set; } = default!;
         public ulong size { get; set; } = default!;
         public string[] data { get; set; } = default!;
+        public ulong dsize { get; set; } = default!;
+        public long id { get; set; } = default!;
+
+
         internal byte[]? _data { get; set; } = default!;
 
-        internal int? Get { get; set; } = default!;
-        internal long? msg_id { get; set; } = default!;
         internal string? key { get; set; } = default!;
 
 
-        public ulong dsize { get; set; } = default!;
+        
         internal string loc { get; set; } = default!;
 
         public void DownloadBytes(string Loc, long key)
         {
-            if (Get is null) throw new Exception("This file is not on a server");
             using HttpClient web = new();
             web.DefaultRequestHeaders.Add("token", Server.Token);
-            web.DefaultRequestHeaders.Add("id", msg_id.ToString());
-            web.DefaultRequestHeaders.Add("index", Get.ToString());
+            web.DefaultRequestHeaders.Add("id", id.ToString());
             IncomingHTTP? request = JsonSerializer.Deserialize(web.GetAsync($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/SocketMessage/GetFile").Result.Content.ReadAsStringAsync().Result, IncomingHTTPContext.Default.IncomingHTTP);
             if (request is not null && request.error is not null)
             {

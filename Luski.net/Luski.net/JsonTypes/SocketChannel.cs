@@ -2,6 +2,7 @@
 using Luski.net.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
@@ -25,6 +26,7 @@ namespace Luski.net.JsonTypes
         public string Description => description;
 
         public string Key => key;
+        public long owner { get; set; } = default!;
 
         public ChannelType Type => type;
 
@@ -45,12 +47,32 @@ namespace Luski.net.JsonTypes
             }
         }
 
-        public IMessage GetMessage(long ID)
+        public Task<IMessage> GetMessage(long ID)
         {
-            return SocketMessage.GetMessage(ID);
+            return Task.FromResult(SocketMessage.GetMessage(ID) as IMessage);
         }
 
-        public IReadOnlyList<IMessage> GetMessages(long Message_Id, int count = 50)
+        public Task<byte[]> GetPicture()
+        {
+            if (type == ChannelType.DM) return Task.FromResult(Members.First().GetAvatar());
+            else
+            {
+                if (Server.Cache != null)
+                {
+                    if (!System.IO.File.Exists($"{Server.Cache}/channels/{id}"))
+                    {
+                        using HttpClient client = new();
+                        client.DefaultRequestHeaders.Add("token", Server.Token);
+                        Stream stream = client.GetStreamAsync($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/SocketChannel/GetPicture/{id}").Result;
+                        using FileStream fs = System.IO.File.Create($"{Server.Cache}/channels/{id}");
+                        stream.CopyTo(fs);
+                    }
+                }
+                return Task.FromResult(System.IO.File.ReadAllBytes($"{Server.Cache}/channels/{id}"));
+            }
+        }
+
+        public Task<IReadOnlyList<IMessage>> GetMessages(long Message_Id, int count = 50)
         {
             if (count > 200)
             {
@@ -76,6 +98,7 @@ namespace Luski.net.JsonTypes
                 {
                     int num = Convert.ToInt32(Math.Ceiling((Environment.ProcessorCount * Server.Percent) * 2.0));
                     if (num == 0) num = 1;
+                    
                     string? key = Encryption.File.Channels.GetKey(Id);
                     if (data is null) throw new Exception("Invalid data from server");
                     if (data.messages is null) data.messages = Array.Empty<SocketMessage>();
@@ -87,7 +110,7 @@ namespace Luski.net.JsonTypes
                         i.decrypt(key);
                     });
                     key = null;
-                    return data.messages.ToList().AsReadOnly();
+                    return Task.FromResult(data.messages.ToList().AsReadOnly() as IReadOnlyList<IMessage>);
                 }
                 else
                 {
@@ -96,7 +119,7 @@ namespace Luski.net.JsonTypes
             }
         }
 
-        public IReadOnlyList<IMessage> GetMessages(int count = 50)
+        public Task<IReadOnlyList<IMessage>> GetMessages(int count = 50)
         {
             try
             {
@@ -133,7 +156,7 @@ namespace Luski.net.JsonTypes
                             i.decrypt(key);
                         });
                         key = null;
-                        return data.messages.ToList().AsReadOnly();
+                        return Task.FromResult(data.messages.ToList().AsReadOnly() as IReadOnlyList<IMessage>);
                     }
                     else
                     {
@@ -155,7 +178,7 @@ namespace Luski.net.JsonTypes
             }
         }
 
-        public void SendMessage(string Message)
+        public Task SendMessage(string Message, params File[] Files)
         {
             string data;
             using (HttpClient web = new())
@@ -164,6 +187,7 @@ namespace Luski.net.JsonTypes
                 data = web.PostAsync($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/socketmessage", new StringContent(JsonRequest.Message(Message, Id))).Result.Content.ReadAsStringAsync().Result;
             }
             if (data.ToLower().Contains("error")) throw new Exception(data);
+            return Task.CompletedTask;
         }
 
         private List<IUser> _members = new();
@@ -216,19 +240,53 @@ namespace Luski.net.JsonTypes
             };
         }
 
+        public Task SendKeysToUsers()
+        {
+            if (this.key is null && owner == Server._user.ID)
+            {
+                StartKeyProcessAsync().Wait();
+                return Task.CompletedTask;
+            }
+            int num = Convert.ToInt32(Math.Ceiling((Environment.ProcessorCount * Server.Percent) * 2.0));
+            if (num == 0) num = 1;
+            string? lkey = Encryption.File.Channels.GetKey(id);
+            Parallel.ForEach(Members, new ParallelOptions()
+            {
+                MaxDegreeOfParallelism = num
+            }, i =>
+            {
+                if (i.ID != Server._user?.ID)
+                {
+                    string key = i.GetUserKey();
+                    if (!string.IsNullOrEmpty(key))
+                    {
+                        KeyExchange send = new()
+                        {
+                            to = i.ID,
+                            channel = Id,
+                            key = Convert.ToBase64String(Encryption.Encrypt(lkey, key))
+                        };
+                        Server.SendServer(JsonRequest.Send(DataType.Key_Exchange, send));
+                    }
+                }
+            });
+            return Task.CompletedTask;
+        }
+
         internal async Task StartKeyProcessAsync()
         {
             Encryption.GenerateNewKeys(out string Public, out string Private);
             key = Public;
+            HttpResponseMessage b;
             using (HttpClient web = new())
             {
                 web.DefaultRequestHeaders.Add("token", Server.Token);
-                _ = web.PostAsync($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/SocketChannel/SetKey/{Id}", new StringContent(Key)).Result.Content.ReadAsStringAsync().Result;
+                b = web.PostAsync($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/SocketChannel/SetKey/{Id}", new StringContent(Key)).Result;
             }
             int num = Convert.ToInt32(Math.Ceiling((Environment.ProcessorCount * Server.Percent) * 2.0));
             if (num == 0) num = 1;
             Encryption.File.Channels.AddKey(Id, Private);
-            Parallel.ForEach(_members, new ParallelOptions()
+            Parallel.ForEach(Members, new ParallelOptions()
             {
                 MaxDegreeOfParallelism = num
             }, i =>

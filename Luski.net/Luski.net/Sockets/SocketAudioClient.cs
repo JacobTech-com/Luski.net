@@ -1,5 +1,6 @@
 ﻿using Luski.net.Enums;
 using Luski.net.Interfaces;
+using Luski.net.JsonTypes;
 using Luski.net.Sound;
 using System;
 using System.Net.Http;
@@ -96,15 +97,23 @@ namespace Luski.net.Sockets
                         break;
                     }
                 }
-                dynamic json = JsonSerializer.Deserialize<dynamic>(data);
-                Samples = (int)json.SamplesPerSecond;
-                //Server.ServerOut.Send(JsonRequest.Send(DataType.Join_Call, JsonRequest.JoinCall(Channel)).ToString());
+                IncomingHTTP json = JsonSerializer.Deserialize<IncomingHTTP>(data);
+                call c = JsonSerializer.Deserialize<call>(json.data.ToString());
+                Server.ServerOut.Send(JsonRequest.Send(DataType.Join_Call, JsonRequest.JoinCall(Channel)).ToString());
+                Samples = c.samples;
             }
+        }
+
+        private class call
+        {
+            public int samples { get; set; } = default!;
+            public string[] members { get; set; } = default!;
         }
 
         public void LeaveCall()
         {
-            throw new NotImplementedException();
+            Server.ServerOut.Send(JsonRequest.Send(DataType.Leave_Call, JsonRequest.JoinCall(Channel)).ToString());
+            StopRecordingFromSounddevice_Client();
         }
 
         private readonly Protocol PrototolClient = new(ProtocolTypes.LH, Encoding.Default);
@@ -139,9 +148,15 @@ namespace Luski.net.Sockets
 
         private async Task SocketAudioClient_DataRecived(string arg)
         {
-            dynamic d = JsonSerializer.Deserialize<dynamic>(arg.ToString());
-            byte[] data = (byte[])d.data;
+            cdata d = JsonSerializer.Deserialize<cdata>(arg);
+            byte[] data = Convert.FromBase64String(d.data);
             PrototolClient.Receive_LH(this, data);
+        }
+
+        private class cdata
+        {
+            public string data { get; set; } = default!;
+            public long from { get; set; } = default!;
         }
 
         private void SendData(byte[] data)
@@ -156,7 +171,7 @@ namespace Luski.net.Sockets
 
         internal void Givedata(dynamic data)
         {
-            DataRecived.Invoke($"{{\"from\":{(long)data.data.from}, \"data\": \"{(string)data.data.data}\"}}");
+            DataRecived.Invoke(((object)data).ToString());
         }
 
         private int _samp;

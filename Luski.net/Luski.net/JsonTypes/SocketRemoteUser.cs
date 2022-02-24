@@ -52,8 +52,15 @@ namespace Luski.net.JsonTypes
                 web.DefaultRequestHeaders.Add("token", Server.Token);
                 data = web.GetAsync($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/Keys/GetUserKey/{ID}").Result.Content.ReadAsStringAsync().Result;
             }
-            IncomingHTTP? json = JsonSerializer.Deserialize(data, IncomingHTTPContext.Default.IncomingHTTP);
-            if (json is not null && json.error is not null) return data;
+            return data;
+            IncomingHTTP? json = null;
+            try
+            { json = JsonSerializer.Deserialize(data, IncomingHTTPContext.Default.IncomingHTTP); }
+            catch
+            {
+                return data;
+            }
+            
             throw (json?.error) switch
             {
                 ErrorCode.InvalidToken => new Exception("Your current token is no longer valid"),
@@ -74,7 +81,18 @@ namespace Luski.net.JsonTypes
             if (Server.poeople is null) Server.poeople = new();
             if (Server.poeople.Count > 0 && Server.poeople.Any(s => s.ID == UserId))
             {
-                return Server.poeople.Where(s => s.ID == UserId).FirstOrDefault() as SocketRemoteUser;
+                var temp = Server.poeople.Where(s => s.ID == UserId).FirstOrDefault() as SocketRemoteUser;
+                if (temp.Channel == null)
+                {
+                    foreach (SocketChannel chan in Server.chans)
+                    {
+                        if (chan.Type == ChannelType.DM && chan.Id != 0 && chan.members is not null)
+                        {
+                            if (chan.members.Any(s => s == UserId)) temp.Channel = chan;
+                        }
+                    }
+                }
+                return temp;
             }
             while (true)
             {

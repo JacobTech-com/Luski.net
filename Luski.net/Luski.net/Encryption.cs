@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Luski.net.Enums;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -20,6 +21,9 @@ namespace Luski.net
         internal static bool Generating = false;
         internal static bool Generated = false;
         private static string? _serverpublickey = null;
+        internal static string? ofkey = null;
+        internal static string? outofkey = null;
+        internal static string pw = "";
         internal static string ServerPublicKey
         {
             get
@@ -36,6 +40,9 @@ namespace Luski.net
                 Generating = true;
                 myPrivateKey = PermaRSA.ToXmlString(true);
                 MyPublicKey = PermaRSA.ToXmlString(false);
+                RSACryptoServiceProvider r = new(2048 * 2);
+                ofkey = r.ToXmlString(true);
+                outofkey = r.ToXmlString(false);
                 Generated = true;
             }
         }
@@ -48,20 +55,123 @@ namespace Luski.net
             return;
         }
 
-        internal static class File
+        public static class File
         {
-            internal static class Channels
+            internal static void SetOfflineKey(string key)
             {
-                internal static string? GetKey(long channel)
+                MakeFile(Server.GetKeyFilePath, pw);
+                LuskiDataFile? fileLayout = JsonSerializer.Deserialize<LuskiDataFile>(FileString(Server.GetKeyFilePath, pw));
+                fileLayout.OfflineKey = key;
+                fileLayout.Save(Server.GetKeyFilePath, pw);
+            }
+
+            internal static string? GetOfflineKey()
+            {
+                MakeFile(Server.GetKeyFilePath, pw);
+                LuskiDataFile? fileLayout = JsonSerializer.Deserialize<LuskiDataFile>(FileString(Server.GetKeyFilePath, pw));
+                return fileLayout?.OfflineKey;
+            }
+
+            private static string FileString(string path, string password)
+            {
+                byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
+                byte[] salt = new byte[100];
+                FileStream fsCrypt = new(path, FileMode.Open);
+                fsCrypt.Read(salt, 0, salt.Length);
+                RijndaelManaged AES = new()
                 {
-                    FileLayout? fileLayout;
+                    KeySize = 256,
+                    BlockSize = 128
+                };
+                Rfc2898DeriveBytes key = new(passwordBytes, salt, 50000);
+                AES.Key = key.GetBytes(AES.KeySize / 8);
+                AES.IV = key.GetBytes(AES.BlockSize / 8);
+                AES.Padding = PaddingMode.PKCS7;
+                AES.Mode = CipherMode.CFB;
+                CryptoStream cs = new(fsCrypt, AES.CreateDecryptor(), CryptoStreamMode.Read);
+                MemoryStream fsOut = new();
+                int read;
+                byte[] buffer = new byte[1048576];
+                try
+                {
+                    while ((read = cs.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        fsOut.Write(buffer, 0, read);
+                    }
+                }
+                catch (CryptographicException ex_CryptographicException)
+                {
+                    Console.WriteLine("CryptographicException error: " + ex_CryptographicException.Message);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error: " + ex.Message);
+                }
+                fsOut.Seek(0, SeekOrigin.Begin);
+                using BinaryReader reader = new(fsOut);
+                byte[] by = reader.ReadBytes((int)fsOut.Length);
+                fsOut.Close();
+                fsCrypt.Close();
+                return Encoding.UTF8.GetString(by);
+            }
+
+            public static class Channels
+            {
+                public static string GetKey(long channel)
+                {
+                    LuskiDataFile? fileLayout;
                     IEnumerable<ChannelLayout>? lis;
                     try
                     {
+#pragma warning disable CS8603 // Possible null reference return.
                         if (channel == 0) return myPrivateKey;
-                        MakeFile();
-                        string g = FileString();
-                        fileLayout = JsonSerializer.Deserialize<FileLayout>(g);
+#pragma warning restore CS8603 // Possible null reference return.
+                        MakeFile(Server.GetKeyFilePath, pw);
+                        fileLayout = JsonSerializer.Deserialize<LuskiDataFile>(FileString(Server.GetKeyFilePath, pw));
+                        lis = fileLayout?.channels?.Where(s => s.id == channel);
+                        if (lis?.Count() > 0)
+                        {
+                            return lis.First().key;
+                        }
+                        foreach (Branch b in (Branch[])Enum.GetValues(typeof(Branch)))
+                        {
+                            if (b != Server.Branch)
+                            {
+                                try
+                                {
+                                    string temp = GetKeyBranch(channel, b);
+                                    if (temp is not null)
+                                    {
+                                        AddKey(channel, temp);
+                                        return temp;
+                                    }
+                                }
+                                catch
+                                {
+
+                                }
+                            }
+                        }
+                        throw new Exception("You dont have a key for that channel");
+                    }
+                    finally
+                    {
+                        fileLayout = null;
+                        lis = null;
+                    }
+                }
+
+                internal static string GetKeyBranch(long channel, Branch branch)
+                {
+                    LuskiDataFile? fileLayout;
+                    IEnumerable<ChannelLayout>? lis;
+                    try
+                    {
+#pragma warning disable CS8603 // Possible null reference return.
+                        if (channel == 0) return myPrivateKey;
+#pragma warning restore CS8603 // Possible null reference return.
+                        MakeFile(Server.GetKeyFilePathBr(branch.ToString()), pw);
+                        fileLayout = JsonSerializer.Deserialize<LuskiDataFile>(FileString(Server.GetKeyFilePathBr(branch.ToString()), pw));
                         lis = fileLayout?.channels?.Where(s => s.id == channel);
                         if (lis?.Count() > 0)
                         {
@@ -76,78 +186,48 @@ namespace Luski.net
                     }
                 }
 
-                private static string FileString()
+                public static void AddKey(long channel, string key)
                 {
-                    byte[] passwordBytes = Encoding.UTF8.GetBytes("test");
-                    byte[] salt = new byte[100];
-                    FileStream fsCrypt = new(Server.GetKeyFilePath, FileMode.Open);
-                    fsCrypt.Read(salt, 0, salt.Length);
-                    RijndaelManaged AES = new()
-                    {
-                        KeySize = 256,
-                        BlockSize = 128
-                    };
-                    Rfc2898DeriveBytes key = new(passwordBytes, salt, 50000);
-                    AES.Key = key.GetBytes(AES.KeySize / 8);
-                    AES.IV = key.GetBytes(AES.BlockSize / 8);
-                    AES.Padding = PaddingMode.PKCS7;
-                    AES.Mode = CipherMode.CFB;
-                    CryptoStream cs = new(fsCrypt, AES.CreateDecryptor(), CryptoStreamMode.Read);
-                    MemoryStream fsOut = new();
-                    int read;
-                    byte[] buffer = new byte[1048576];
-                    try
-                    {
-                        while ((read = cs.Read(buffer, 0, buffer.Length)) > 0)
-                        {
-                            fsOut.Write(buffer, 0, read);
-                        }
-                    }
-                    catch (CryptographicException ex_CryptographicException)
-                    {
-                        Console.WriteLine("CryptographicException error: " + ex_CryptographicException.Message);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine("Error: " + ex.Message);
-                    }
-                    fsOut.Seek(0, SeekOrigin.Begin);
-                    using BinaryReader reader = new(fsOut);
-                    byte[] by = reader.ReadBytes((int)fsOut.Length);
-                    fsOut.Close();
-                    fsCrypt.Close();
-                    return Encoding.UTF8.GetString(by);
-                }
-
-                internal static void AddKey(long channel, string key)
-                {
-                    MakeFile();
-                    FileLayout? fileLayout = JsonSerializer.Deserialize<FileLayout>(FileString());
+                    MakeFile(Server.GetKeyFilePath, pw);
+                    LuskiDataFile? fileLayout = JsonSerializer.Deserialize<LuskiDataFile>(FileString(Server.GetKeyFilePath, pw));
                     fileLayout?.Addchannelkey(channel, key);
-                    fileLayout?.Save();
+                    fileLayout?.Save(Server.GetKeyFilePath, pw);
                 }
             }
 
-            private static void MakeFile()
+            private static void MakeFile(string dir, string password)
             {
-                if (!System.IO.File.Exists(Server.GetKeyFilePath))
+                if (!System.IO.File.Exists(dir))
                 {
-                    FileLayout? l = JsonSerializer.Deserialize<FileLayout>("{\"channels\":[]}");
-                    l?.Save();
+                    LuskiDataFile? l = JsonSerializer.Deserialize<LuskiDataFile>("{\"channels\":[]}");
+                    l?.Save(dir, password);
                 }
             }
 
-            private class FileLayout
+            public class LuskiDataFile
             {
+                public static LuskiDataFile GetDataFile(string path, string password)
+                {
+                    MakeFile(path, password);
+                    return JsonSerializer.Deserialize<LuskiDataFile>(FileString(path, password));
+                }
+
+                internal static LuskiDataFile GetDefualtDataFile()
+                {
+                    return GetDataFile(Server.GetKeyFilePath, pw);
+                }
+
                 public ChannelLayout[]? channels { get; set; } = default!;
 
-                public void Save()
+                public string? OfflineKey { get; set; } = default!;
+
+                public void Save(string file, string password)
                 {
                     byte[] salt = new byte[100];
                     RandomNumberGenerator? provider = RandomNumberGenerator.Create();
                     provider.GetBytes(salt);
-                    FileStream fsCrypt = new(Server.GetKeyFilePath, FileMode.Create);
-                    byte[] passwordBytes = Encoding.UTF8.GetBytes("test");
+                    FileStream fsCrypt = new(file, FileMode.Create);
+                    byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
                     RijndaelManaged AES = new()
                     {
                         KeySize = 256,
@@ -160,7 +240,8 @@ namespace Luski.net
                     AES.Mode = CipherMode.CFB;
                     fsCrypt.Write(salt, 0, salt.Length);
                     CryptoStream cs = new(fsCrypt, AES.CreateEncryptor(), CryptoStreamMode.Write);
-                    MemoryStream fsIn = new(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(this)));
+                    string tempp = JsonSerializer.Serialize(this);
+                    MemoryStream fsIn = new(Encoding.UTF8.GetBytes(tempp));
                     byte[] buffer = new byte[1048576];
                     int read;
                     try
@@ -185,6 +266,7 @@ namespace Luski.net
                 public void Addchannelkey(long chan, string Key)
                 {
                     List<ChannelLayout>? chans = channels?.ToList();
+                    if (chans is null) chans = new();
                     if (!(chans?.Where(s => s.id == chan).Count() > 0))
                     {
                         ChannelLayout l = new()
@@ -198,7 +280,7 @@ namespace Luski.net
                 }
             }
 
-            private class ChannelLayout
+            public class ChannelLayout
             {
                 public long id { get; set; } = default!;
                 public string key { get; set; } = default!;
@@ -213,7 +295,7 @@ namespace Luski.net
                 byte[] salt = new byte[100];
                 RNGCryptoServiceProvider provider = new();
                 provider.GetBytes(salt);
-                FileStream fsCrypt = new FileStream(p, FileMode.Open);
+                FileStream fsCrypt = new(p, FileMode.Open);
                 byte[] passwordBytes = Encoding.UTF8.GetBytes(Password);
                 Aes AES = Aes.Create();
                 AES.KeySize = 256;
@@ -225,11 +307,11 @@ namespace Luski.net
                 AES.Mode = CipherMode.CFB;
                 fsCrypt.Write(salt, 0, salt.Length);
                 key.Dispose();
-                CryptoStream cs = new CryptoStream(fsCrypt, AES.CreateEncryptor(), CryptoStreamMode.Write);
-                FileStream fsIn = new FileStream(path, FileMode.Open);
+                CryptoStream cs = new(fsCrypt, AES.CreateEncryptor(), CryptoStreamMode.Write);
+                FileStream fsIn = new(path, FileMode.Open);
                 try
                 {
-                    FileInfo FI = new FileInfo(path);
+                    FileInfo FI = new(path);
                     byte[] buffer = new byte[FI.Length];
                     int read;
                     while ((read = fsIn.Read(buffer, 0, buffer.Length)) > 0)

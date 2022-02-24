@@ -46,8 +46,6 @@ namespace Luski.net.JsonTypes
                 for (int i = 0; i < files.Length; i++)
                 {
                     files[i].key = key;
-                    files[i].msg_id = id;
-                    files[i].Get = i;
                     files[i].decrypt();
                 }
             }
