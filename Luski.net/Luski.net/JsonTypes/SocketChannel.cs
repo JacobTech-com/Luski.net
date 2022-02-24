@@ -184,7 +184,7 @@ namespace Luski.net.JsonTypes
             using (HttpClient web = new())
             {
                 web.DefaultRequestHeaders.Add("token", Server.Token);
-                data = web.PostAsync($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/socketmessage", new StringContent(JsonRequest.Message(Message, Id))).Result.Content.ReadAsStringAsync().Result;
+                data = web.PostAsync($"https://{Server.Domain}/Luski/api/{Server.API_Ver}/socketmessage", new StringContent(JsonRequest.Message(Message, Id, Files))).Result.Content.ReadAsStringAsync().Result;
             }
             if (data.ToLower().Contains("error")) throw new Exception(data);
             return Task.CompletedTask;

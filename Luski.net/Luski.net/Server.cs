@@ -3,6 +3,7 @@ using Luski.net.Interfaces;
 using Luski.net.JsonTypes;
 using Luski.net.Sockets;
 using System;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text.Json;
@@ -197,20 +198,7 @@ public sealed partial class Server
         _user.selected_channel = Channel;
     }
 
-    public Task SendMessage(string Message, long Channel, params File[] Files)
-    {
-
-        string data;
-        using (HttpClient web = new())
-        {
-            web.DefaultRequestHeaders.Add("token", Token);
-            web.MaxResponseContentBufferSize = 2147483647;
-            HttpResponseMessage thing = web.PostAsync($"https://{Domain}/Luski/api/{API_Ver}/socketmessage", new StringContent(JsonRequest.Message(Message, Channel, Files))).Result;
-            data = thing.Content.ReadAsStringAsync().Result;
-        }
-        if (data.ToLower().Contains("error")) throw new Exception(data);
-        return Task.CompletedTask;
-    }
+    public Task SendMessage(string Message, long Channel, params File[] Files) => GetChannel(Channel).SendMessage(Message, Files);
 
     public void SetMultiThreadPercent(double num)
     {
@@ -218,20 +206,11 @@ public sealed partial class Server
         Percent = num / 100;
     }
 
-    public IMessage GetMessage(long MessageId)
-    {
-        return SocketMessage.GetMessage(MessageId);
-    }
+    public IMessage GetMessage(long MessageId) => SocketMessage.GetMessage(MessageId);
 
-    public IRemoteUser GetUser(long UserID)
-    {
-        return SocketRemoteUser.GetUser(UserID);
-    }
+    public IRemoteUser GetUser(long UserID) => SocketRemoteUser.GetUser(UserID);
 
-    public IChannel GetChannel(long Channel)
-    {
-        return SocketChannel.GetChannel(Channel);
-    }
+    public IChannel GetChannel(long Channel) => SocketChannel.GetChannel(Channel);
 
     public IAppUser CurrentUser
     {
